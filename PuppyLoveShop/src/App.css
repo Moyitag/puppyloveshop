@@ -653,3 +653,98 @@ body {
   color: #bbb;
   font-size: 15px;
 }
+
+.product-image {
+  width: 100%;
+  height: 120px; /* espacio fijo para la imagen */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* 🔥 esto evita que se salga */
+}
+
+.product-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* mantiene proporción */
+}
+
+/* ===== HEADER ACTIONS ===== */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-pdf {
+  background-color: white;
+  color: #d5556a;
+  border: 1.5px solid #d5556a;
+  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-pdf:hover {
+  background-color: #fde8ec;
+}
+
+.btn-filter {
+  background-color: white;
+  color: #d5556a;
+  border: 1.5px solid #d5556a;
+  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-filter:hover {
+  background-color: #fde8ec;
+}
+
+/* ===== SUB-TABS (Gastos / Ganancias) ===== */
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sub-tab {
+  background-color: white;
+  color: #d5556a;
+  border: 1.5px solid #d5556a;
+  border-radius: 7px;
+  padding: 7px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sub-tab:hover {
+  background-color: #fde8ec;
+}
+
+.sub-tab.active {
+  background-color: #d5556a;
+  color: white;
+}
+
+/* ===== STATUS ICONS ===== */
+.status-ok {
+  color: #2ea832;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.status-no {
+  color: #d5556a;
+  font-size: 16px;
+  font-weight: 700;
+}

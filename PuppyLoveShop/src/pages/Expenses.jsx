@@ -13,23 +13,22 @@ const DATA_GASTOS = [
 ];
 
 const DATA_GANANCIAS = [
-  { id: 1, nombre: 'Venta Alimento', gasto: '250', descripcion: 'Venta mensual alimento premium', activo: 'Si', foto: '' },
-  { id: 2, nombre: 'Servicio Grooming', gasto: '180', descripcion: 'Servicio de baño y corte',    activo: 'Si', foto: '' },
-  { id: 3, nombre: 'Venta Accesorios', gasto: '320', descripcion: 'Venta de arneses y correas',   activo: 'Si', foto: '' },
-  { id: 4, nombre: 'Consultas Vet',   gasto: '400', descripcion: 'Consultas veterinarias mes',    activo: 'Si', foto: '' },
+  { id: 1, nombre: 'Venta Alimento',    gasto: '250', descripcion: 'Venta mensual alimento premium', activo: 'Si', foto: '' },
+  { id: 2, nombre: 'Servicio Grooming', gasto: '180', descripcion: 'Servicio de baño y corte',       activo: 'Si', foto: '' },
+  { id: 3, nombre: 'Venta Accesorios',  gasto: '320', descripcion: 'Venta de arneses y correas',     activo: 'Si', foto: '' },
+  { id: 4, nombre: 'Consultas Vet',     gasto: '400', descripcion: 'Consultas veterinarias mes',     activo: 'Si', foto: '' },
 ];
 
 const PAGE_SIZE = 5;
 
 export default function Gastos() {
-  const [subTab, setSubTab]     = useState('Gasto');
-  const [gastos, setGastos]     = useState(DATA_GASTOS);
+  const [subTab, setSubTab]       = useState('Gasto');
+  const [gastos, setGastos]       = useState(DATA_GASTOS);
   const [ganancias, setGanancias] = useState(DATA_GANANCIAS);
-  const [showForm, setShowForm] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [page, setPage]         = useState(1);
+  const [showForm, setShowForm]   = useState(false);
+  const [editItem, setEditItem]   = useState(null);
+  const [page, setPage]           = useState(1);
 
-  // Datos activos según sub-tab
   const lista    = subTab === 'Gasto' ? gastos    : ganancias;
   const setLista = subTab === 'Gasto' ? setGastos : setGanancias;
 
@@ -52,7 +51,6 @@ export default function Gastos() {
     setShowForm(false);
   };
 
-  // Total de gastos/ganancias visibles
   const totalMonto = lista.reduce((acc, g) => acc + parseFloat(g.gasto || 0), 0);
 
   return (

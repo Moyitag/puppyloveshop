@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import InventarioForm from '../components/InventoryForm.jsx';
 
 const DATA = [
-  { id: 1, nombre: 'Alimento Húmedo Cachorro', precio: '6.00',  descripcion: 'Alimento premium para cachorros', stock: 25, activo: 'Si', emoji: '🥩' },
-  { id: 2, nombre: 'Huesos Masticables',        precio: '3.50',  descripcion: 'Huesos naturales para perros',    stock: 40, activo: 'Si', emoji: '🦴' },
-  { id: 3, nombre: 'Arnés Pequeño',             precio: '12.00', descripcion: 'Arnés ergonómico talla S',        stock: 15, activo: 'Si', emoji: '🐕' },
-  { id: 4, nombre: 'Jaula Mediana',             precio: '35.00', descripcion: 'Jaula plegable para transporte',  stock: 8,  activo: 'Si', emoji: '🏠' },
-  { id: 5, nombre: 'Alimento Premium Adulto',   precio: '18.00', descripcion: 'Alimento balanceado adultos',     stock: 30, activo: 'Si', emoji: '🐾' },
-  { id: 6, nombre: 'Escoba para Mascotas',      precio: '8.50',  descripcion: 'Escoba especial antiestática',    stock: 12, activo: 'No', emoji: '🧹' },
+  { id: 1, nombre: 'Alimento Húmedo Cachorro', precio: '6.00',  descripcion: 'Alimento premium para cachorros', stock: 25, activo: 'Si', imagen: '/alimento.avif' },
+  { id: 2, nombre: 'Cama suave',        precio: '3.50',  descripcion: 'Huesos naturales para perros',    stock: 40, activo: 'Si', imagen: '/cama.webp' },
+  { id: 3, nombre: 'Arena de gato',        precio: '12.00', descripcion: 'Arnés ergonómico talla S',        stock: 15, activo: 'Si', imagen: '/arena.webp' },
+  { id: 4, nombre: 'Collar azul',             precio: '35.00', descripcion: 'Jaula plegable para transporte',  stock: 8,  activo: 'Si', imagen: '/collar.webp' },
+  { id: 5, nombre: 'Alimento Premium Adulto',   precio: '18.00', descripcion: 'Alimento balanceado adultos',     stock: 30, activo: 'Si', imagen: '/gato.png' },
+  { id: 6, nombre: 'Jaula mediana',      precio: '8.50',  descripcion: 'Escoba especial antiestática',    stock: 12, activo: 'No', imagen: '/jaula.png' },
 ];
 
 export default function Inventario() {
-  const [lista, setLista]       = useState(DATA);
+  const [lista, setLista]       = useState(DATA);   
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [filtro, setFiltro]     = useState('Todos');
@@ -61,7 +61,9 @@ export default function Inventario() {
 
         {filtrados.map(p => (
           <div key={p.id} className="product-card">
-            <div className="product-emoji">{p.emoji}</div>
+            <div className="product-image">
+              <img src={p.imagen} alt={p.nombre} />
+            </div>
             <span className="product-name">{p.nombre}</span>
             <span className="product-price">${p.precio}</span>
             <span className="product-stock">Stock: {p.stock}</span>
