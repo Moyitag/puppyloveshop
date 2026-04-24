@@ -1,49 +1,94 @@
-import React from "react";
-import "../App.css";
+import React, { useState } from 'react';
+import InventarioForm from '../components/InventoryForm.jsx';
 
-const Inventory = () => {
-  // 1. Agregamos el campo "image" a cada producto
-  const products = [
-    { id: 1, name: "Alimento Perro", price: "$15.00", image: "/alimento.avif" },
-    { id: 2, name: "Jaula Mediana", price: "$45.00", image: "/jaula.png" },
-    { id: 3, name: "Cama Soft Gato", price: "$22.00", image: "/cama.webp" },
-    { id: 4, name: "Shampoo Mascotas", price: "$9.50", image: "/shampoo.webp" },
-    { id: 5, name: "Collar Azul", price: "$5.00", image: "/collar.webp" },
-    { id: 6, name: "Arena Gato 5kg", price: "$12.00", image: "/arena.webp" },
-    { id: 7, name: "Plato Acero", price: "$7.50", image: "/plato.png" },
-    { id: 8, name: "Juguete Pollo", price: "$3.00", image: "/juguete.webp" }
-  ];
+const DATA = [
+  { id: 1, nombre: 'Alimento Húmedo Cachorro', precio: '6.00',  descripcion: 'Alimento premium para cachorros', stock: 25, activo: 'Si', emoji: '🥩' },
+  { id: 2, nombre: 'Huesos Masticables',        precio: '3.50',  descripcion: 'Huesos naturales para perros',    stock: 40, activo: 'Si', emoji: '🦴' },
+  { id: 3, nombre: 'Arnés Pequeño',             precio: '12.00', descripcion: 'Arnés ergonómico talla S',        stock: 15, activo: 'Si', emoji: '🐕' },
+  { id: 4, nombre: 'Jaula Mediana',             precio: '35.00', descripcion: 'Jaula plegable para transporte',  stock: 8,  activo: 'Si', emoji: '🏠' },
+  { id: 5, nombre: 'Alimento Premium Adulto',   precio: '18.00', descripcion: 'Alimento balanceado adultos',     stock: 30, activo: 'Si', emoji: '🐾' },
+  { id: 6, nombre: 'Escoba para Mascotas',      precio: '8.50',  descripcion: 'Escoba especial antiestática',    stock: 12, activo: 'No', emoji: '🧹' },
+];
+
+export default function Inventario() {
+  const [lista, setLista]       = useState(DATA);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [filtro, setFiltro]     = useState('Todos');
+
+  const filtrados = filtro === 'Todos' ? lista : lista.filter(p => p.activo === 'Si');
+
+  <br/>
+
+  const openAdd  = ()  => { setEditItem(null); setShowForm(true); };
+  const openEdit = (p) => { setEditItem(p);    setShowForm(true); };
+  const remove   = id  => setLista(l => l.filter(x => x.id !== id));
+
+  const save = item => {
+    setLista(l =>
+      l.some(x => x.id === item.id)
+        ? l.map(x => x.id === item.id ? { ...item, emoji: x.emoji } : x)
+        : [...l, { ...item, emoji: '📦' }]
+    );
+    setShowForm(false);
+  };
 
   return (
-    <div className="card-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ color: 'var(--pink-medium)', margin: 0 }}>Inventario</h2>
-        <button className="btn-pink">Agregar Producto</button>
+    <div>
+      <div className="section-header">
+        <span className="section-title">Inventario</span>
+        <button className="btn-add" onClick={openAdd}>+ Agregar</button>
       </div>
 
-      <div className="inventory-grid">
-        {products.map((prod) => (
-          <div className="item-card" key={prod.id}>
-            <div className="image-placeholder">
-              {/* 2. Aquí cambiamos "/logo.png" por prod.image */}
-              <img 
-                src={prod.image} 
-                width="100" 
-                alt={prod.name} 
-                onError={(e) => e.target.src = "/logo.png"} // Si no encuentra la foto, pone el logo por defecto
-              />
-            </div>
-            <h3 style={{ fontSize: '16px', margin: '10px 0', fontWeight: '600' }}>{prod.name}</h3>
-            <p style={{ color: '#ef869f', fontWeight: 'bold', fontSize: '1.1rem', margin: '5px 0' }}>{prod.price}</p>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-              <button className="btn-pink" style={{ padding: '5px 10px', fontSize: '12px' }}>Editar</button>
-              <button className="btn-pink" style={{ padding: '5px 10px', fontSize: '12px', background: '#f7dae0' }}>Eliminar</button>
+      <div className="filter-bar">
+        {['Todos', 'Activos'].map(f => (
+          <button
+            key={f}
+            className={`filter-btn ${filtro === f ? 'active' : ''}`}
+            onClick={() => setFiltro(f)}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      <div className="product-grid">
+        {filtrados.length === 0 && (
+          <div className="empty-state" style={{ gridColumn: '1/-1' }}>
+            Sin productos registrados.
+          </div>
+        )}
+
+        {filtrados.map(p => (
+          <div key={p.id} className="product-card">
+            <div className="product-emoji">{p.emoji}</div>
+            <span className="product-name">{p.nombre}</span>
+            <span className="product-price">${p.precio}</span>
+            <span className="product-stock">Stock: {p.stock}</span>
+            <span
+              style={{
+                fontSize: 12,
+                color: p.activo === 'Si' ? '#2ea832' : '#cc3344',
+                fontWeight: 600,
+              }}
+            >
+              {p.activo === 'Si' ? '✔ Activo' : '✘ Inactivo'}
+            </span>
+            <div className="product-actions">
+              <button className="btn-icon" onClick={() => openEdit(p)} title="Editar">✏️</button>
+              <button className="btn-icon" onClick={() => remove(p.id)} title="Eliminar">🗑️</button>
             </div>
           </div>
         ))}
       </div>
+
+      {showForm && (
+        <InventarioForm
+          producto={editItem}
+          onSave={save}
+          onClose={() => setShowForm(false)}
+        />
+      )}
     </div>
   );
-};
-
-export default Inventory;
+}
