@@ -11,7 +11,7 @@ import registerEmployeeRoutes from "./src/routes/registerEmployeeRoutes.js";
 import validateAuth from "./src/middlewares/validateAuth.js";
 
 const app = express();
-
+//sadf
 app.use(cors({
     origin:["http://localhost:5173", "http://localhost:5174"],
     credentials:true
@@ -42,7 +42,7 @@ app.use("/api/logoutEmployee", validateAuth, logoutRoutes);
 app.use((error, req, res, next) => {
     console.log("error" + error);
     return res.status(400).json({
-        message: error.message || "No se pudo procesar la imagen o los datos enviados",
+        message: error.message || "No se pudo procesar la imagen o los datos enviadoss",
     });
 });
 
