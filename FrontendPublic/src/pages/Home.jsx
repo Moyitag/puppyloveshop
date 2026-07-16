@@ -17,11 +17,13 @@ function Home() {
     <div className="w-full bg-white font-sans">
       {/* HERO */}
       <section className="w-full">
-        <div className="w-full h-[330px] bg-[#fde9ef] overflow-hidden">
+        {/* Quitamos h-[330px] para que la altura sea automática y no fuerce recortes */}
+        <div className="w-full bg-[#fde9ef] overflow-hidden">
           <img
-            src="/img/banner-pets.png"
+            src="./public/image 1.png" // Recuerda usar la ruta directa
             alt="Make your pet happy"
-            className="w-full h-full object-cover"
+            /* Cambiamos h-full por h-auto y quitamos object-cover */
+            className="w-full h-auto block"
           />
         </div>
       </section>
@@ -32,7 +34,7 @@ function Home() {
           <div className="flex flex-col items-center">
             <div className="w-[260px] h-[260px] rounded-2xl bg-[#f7dce4] border border-[#e3b8c4] flex items-center justify-center">
               <img
-                src="/img/gato.png"
+                src="./public/image 19.png"
                 alt="Gatos"
                 className="w-[200px] h-[200px] object-contain"
               />
@@ -43,7 +45,7 @@ function Home() {
           <div className="flex flex-col items-center">
             <div className="w-[260px] h-[260px] rounded-2xl bg-[#d9eef9] border border-[#b7d4e2] flex items-center justify-center">
               <img
-                src="/img/perro.png"
+                src="./public/image 20.png"
                 alt="Perros"
                 className="w-[200px] h-[200px] object-contain"
               />
@@ -54,7 +56,7 @@ function Home() {
           <div className="flex flex-col items-center">
             <div className="w-[260px] h-[260px] rounded-2xl bg-[#fffbea] border border-[#e9dfb7] flex items-center justify-center">
               <img
-                src="/img/pajaro.png"
+                src="./public/image 21.png"
                 alt="Pájaros"
                 className="w-[210px] h-[200px] object-contain"
               />
@@ -65,7 +67,7 @@ function Home() {
           <div className="flex flex-col items-center">
             <div className="w-[260px] h-[260px] rounded-2xl bg-[#ffedc8] border border-[#e6c98f] flex items-center justify-center">
               <img
-                src="/img/pez.png"
+                src="./public/image 22.png"
                 alt="Peces"
                 className="w-[210px] h-[200px] object-contain"
               />
@@ -111,62 +113,64 @@ function Home() {
       </section>
 
       {/* FAVORITOS */}
-<section className="px-12 mt-16">
-  <h2 className="text-4xl font-bold text-black text-center mb-8">
-    Favoritos Puppy
-  </h2>
+      <section className="px-12 mt-16">
+        <h2 className="text-4xl font-bold text-black text-center mb-8">
+          Favoritos Puppy
+        </h2>
 
-  {products.length === 0 && (
-    <p className="text-center text-gray-400">No hay productos disponibles.</p>
-  )}
+        {products.length === 0 && (
+          <p className="text-center text-gray-400">No hay productos disponibles.</p>
+        )}
 
-  <div className="grid grid-cols-3 gap-12 px-16">
-    {products.map(product => (
-      <div
-        key={product._id}
-        className="w-[310px] min-h-[470px] bg-white rounded-md border border-gray-300 shadow-lg mx-auto flex flex-col items-center px-8 py-8"
-      >
-        <img
-          src={product.images?.[0]}
-          alt={product.productName}
-          className="w-[220px] h-[220px] object-contain mb-7"
-        />
+        <div className="grid grid-cols-3 gap-12 px-16">
+          {products.map(product => (
+            <div
+              key={product._id}
+              className="w-[310px] min-h-[470px] bg-white rounded-md border border-gray-300 shadow-lg mx-auto flex flex-col items-center px-8 py-8"
+            >
+              <img
+                src={product.images?.[0]}
+                alt={product.productName}
+                className="w-[220px] h-[220px] object-contain mb-7"
+              />
 
-        <div className="w-full">
-          <h3 className="text-[18px] font-semibold leading-tight text-black text-center">
-            {product.productName}
-          </h3>
+              <div className="w-full">
+                <h3 className="text-[18px] font-semibold leading-tight text-black text-center">
+                  {product.productName}
+                </h3>
 
-          <p
-            className="text-[18px] mt-4 text-center font-medium"
-            style={{ color: pink }}
-          >
-            ${product.price}
-          </p>
+                <p
+                  className="text-[18px] mt-4 text-center font-medium"
+                  style={{ color: pink }}
+                >
+                  ${product.price}
+                </p>
+              </div>
+
+              <button
+                onClick={() => addItem(product)}
+                className="w-full mt-auto py-4 rounded-md text-white text-[17px] font-semibold"
+                style={{ backgroundColor: pink }}
+              >
+                Agregar al carrito
+              </button>
+            </div>
+          ))}
         </div>
-
-        <button
-          onClick={() => addItem(product)}
-          className="w-full mt-auto py-4 rounded-md text-white text-[17px] font-semibold"
-          style={{ backgroundColor: pink }}
-        >
-          Agregar al carrito
-        </button>
-      </div>
-    ))}
-  </div>
-</section>
-
-      {/* APP BANNER */}
-      <section className="px-16 mt-24 mb-12">
-        <div className="w-full h-[220px] rounded-md overflow-hidden bg-[#f4d6df]">
+      </section>
+     {/* APP BANNER */}
+     <section className="px-12 mt-16 mb-16 w-full">
+        {/* El contenedor abarca todo el ancho permitido por el px-12, sin fondos extraños */}
+        <div className="w-full rounded-2xl overflow-hidden shadow-sm flex">
           <img
-            src="/assets/img/banneerpet.png"
-            alt="Descarga la app"
-            className="w-full h-full object-cover"
+            src="./public/image 3.jpg" 
+            alt="Descarga la app Puppy Love Shop"
+            /* w-full asegura que llegue de orilla a orilla, h-auto mantiene su proporción original */
+            className="w-full h-auto block" 
           />
         </div>
       </section>
+
     </div>
   );
 }

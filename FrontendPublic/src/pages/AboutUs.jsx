@@ -134,7 +134,7 @@ export default function AboutUs() {
           {/* Historia */}
           <div className="historia-grid">
             <img
-              src="/assets/about-pets.jpg"
+              src="./public/image 57.png" // Asegúrate de poner el nombre y extensión real de tu archivo aquí
               alt="Nuestras mascotas"
               className="historia-img"
               onError={(e) => {
