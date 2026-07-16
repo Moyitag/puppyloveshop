@@ -53,7 +53,7 @@ salesController.insertSale = async (req, res) => {
 
     await newSale.save();
 
-    return res.status(201).json({ message: "Sale saved" });
+    return res.status(201).json({ message: "Sale saved", ...newSale.toObject() });
   } catch (error) {
     console.log("error" + error);
     return res.status(500).json({ message: "Internal server error" });

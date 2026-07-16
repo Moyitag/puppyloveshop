@@ -83,7 +83,7 @@ shoppingCartController.insertCart = async (req, res) => {
 
     await newCart.save();
 
-    return res.status(201).json({ message: "Cart saved" });
+    return res.status(201).json({ message: "Cart saved", ...newCart.toObject() });
   } catch (error) {
     console.log("error" + error);
     return res.status(500).json({ message: "Internal server error" });

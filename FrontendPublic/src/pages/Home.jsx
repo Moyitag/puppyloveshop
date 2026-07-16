@@ -1,5 +1,17 @@
+import { useEffect, useState } from "react";
+import { apiRequest } from "../services/api";
+import { useCart } from "../context/CartContext";
+
 function Home() {
   const pink = "#E86D87";
+  const { addItem } = useCart();
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    apiRequest("/products")
+      .then(data => setProducts(data.slice(0, 3)))
+      .catch(() => setProducts([]));
+  }, []);
 
   return (
     <div className="w-full bg-white font-sans">
@@ -104,93 +116,44 @@ function Home() {
     Favoritos Puppy
   </h2>
 
+  {products.length === 0 && (
+    <p className="text-center text-gray-400">No hay productos disponibles.</p>
+  )}
+
   <div className="grid grid-cols-3 gap-12 px-16">
-    {/* Producto 1 */}
-    <div className="w-[310px] min-h-[470px] bg-white rounded-md border border-gray-300 shadow-lg mx-auto flex flex-col items-center px-8 py-8">
-      <img
-        src="/img/producto-1.png"
-        alt="Producto 1"
-        className="w-[220px] h-[220px] object-contain mb-7"
-      />
-
-      <div className="w-full">
-        <h3 className="text-[18px] font-semibold leading-tight text-black text-center">
-          Kantal - Huesos Masticables Medianos Mixto Sabores
-        </h3>
-
-        <p
-          className="text-[18px] mt-4 text-center font-medium"
-          style={{ color: pink }}
-        >
-          $25.00
-        </p>
-      </div>
-
-      <button
-        className="w-full mt-auto py-4 rounded-md text-white text-[17px] font-semibold"
-        style={{ backgroundColor: pink }}
+    {products.map(product => (
+      <div
+        key={product._id}
+        className="w-[310px] min-h-[470px] bg-white rounded-md border border-gray-300 shadow-lg mx-auto flex flex-col items-center px-8 py-8"
       >
-        Agregar al carrito
-      </button>
-    </div>
+        <img
+          src={product.images?.[0]}
+          alt={product.productName}
+          className="w-[220px] h-[220px] object-contain mb-7"
+        />
 
-    {/* Producto 2 */}
-    <div className="w-[310px] min-h-[470px] bg-white rounded-md border border-gray-300 shadow-lg mx-auto flex flex-col items-center px-8 py-8">
-      <img
-        src="/img/producto-2.png"
-        alt="Producto 2"
-        className="w-[220px] h-[220px] object-contain mb-7"
-      />
+        <div className="w-full">
+          <h3 className="text-[18px] font-semibold leading-tight text-black text-center">
+            {product.productName}
+          </h3>
 
-      <div className="w-full">
-        <h3 className="text-[18px] font-semibold leading-tight text-black text-center">
-          Hikari peces de granel pequeños
-        </h3>
+          <p
+            className="text-[18px] mt-4 text-center font-medium"
+            style={{ color: pink }}
+          >
+            ${product.price}
+          </p>
+        </div>
 
-        <p
-          className="text-[18px] mt-4 text-center font-medium"
-          style={{ color: pink }}
+        <button
+          onClick={() => addItem(product)}
+          className="w-full mt-auto py-4 rounded-md text-white text-[17px] font-semibold"
+          style={{ backgroundColor: pink }}
         >
-          $28.75
-        </p>
+          Agregar al carrito
+        </button>
       </div>
-
-      <button
-        className="w-full mt-auto py-4 rounded-md text-white text-[17px] font-semibold"
-        style={{ backgroundColor: pink }}
-      >
-        Agregar al carrito
-      </button>
-    </div>
-
-    {/* Producto 3 */}
-    <div className="w-[310px] min-h-[470px] bg-white rounded-md border border-gray-300 shadow-lg mx-auto flex flex-col items-center px-8 py-8">
-      <img
-        src="/img/producto-3.png"
-        alt="Producto 3"
-        className="w-[220px] h-[220px] object-contain mb-7"
-      />
-
-      <div className="w-full">
-        <h3 className="text-[18px] font-semibold leading-tight text-black text-center">
-          Tetra Goldfish comida en copos para peces
-        </h3>
-
-        <p
-          className="text-[18px] mt-4 text-center font-medium"
-          style={{ color: pink }}
-        >
-          $18.50
-        </p>
-      </div>
-
-      <button
-        className="w-full mt-auto py-4 rounded-md text-white text-[17px] font-semibold"
-        style={{ backgroundColor: pink }}
-      >
-        Agregar al carrito
-      </button>
-    </div>
+    ))}
   </div>
 </section>
 

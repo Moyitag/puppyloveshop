@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useCart } from "../context/CartContext";
 
 function Delivery() {
   const pink = "#E86D87";
-  const [metodoPago, setMetodoPago] = useState("");
+  const navigate = useNavigate();
+  const { items, subtotal, shipping, total, paymentMethod, setPaymentMethod } = useCart();
+  const [metodoPago, setMetodoPago] = useState(paymentMethod || "");
+
+  const handleContinue = () => {
+    if (!metodoPago) return;
+    setPaymentMethod(metodoPago);
+    navigate("/payment");
+  };
 
   return (
     <div className="w-full min-h-screen bg-white px-20 py-12 font-sans">
@@ -76,15 +85,15 @@ function Delivery() {
               </button>
             </Link>
 
-            <Link to="/payment">
-              <button
-                type="button"
-                className="w-[255px] h-[42px] rounded-md text-white text-[17px] font-bold"
-                style={{ backgroundColor: pink }}
-              >
-                Continuar
-              </button>
-            </Link>
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={!metodoPago}
+              className="w-[255px] h-[42px] rounded-md text-white text-[17px] font-bold disabled:opacity-50"
+              style={{ backgroundColor: pink }}
+            >
+              Continuar
+            </button>
           </div>
         </div>
 
@@ -94,39 +103,25 @@ function Delivery() {
             Resumen de compra
           </h2>
 
-          {/* Producto 1 */}
-          <div className="flex items-start gap-6 mb-16">
-            <img
-              src="/img/cart-product-1.png"
-              alt="Producto 1"
-              className="w-[95px] h-[110px] object-contain"
-            />
+          {items.map(item => (
+            <div key={item.productId} className="flex items-start gap-6 mb-9">
+              <img
+                src={item.image}
+                alt={item.productName}
+                className="w-[95px] h-[110px] object-contain"
+              />
 
-            <div>
-              <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
-                Huesos Masticables Grandes Sabor Pollo
-              </h3>
+              <div>
+                <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
+                  {item.productName}
+                </h3>
 
-              <p className="text-[14px] text-black mt-4">$6.00</p>
+                <p className="text-[14px] text-black mt-4">
+                  ${(item.price * item.amount).toFixed(2)}
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* Producto 2 */}
-          <div className="flex items-start gap-6 mb-9">
-            <img
-              src="/img/cart-product-2.png"
-              alt="Producto 2"
-              className="w-[95px] h-[110px] object-contain"
-            />
-
-            <div>
-              <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
-                Alimento Húmedo Cachorro Res
-              </h3>
-
-              <p className="text-[14px] text-black mt-4">$6.00</p>
-            </div>
-          </div>
+          ))}
 
           <div
             className="w-full h-[2px] mt-10 mb-8"
@@ -136,17 +131,17 @@ function Delivery() {
           <div className="space-y-6 text-[17px]">
             <div className="flex justify-between">
               <span className="text-gray-400">Subtotal</span>
-              <span className="text-gray-400">$12.00</span>
+              <span className="text-gray-400">${subtotal.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Envío</span>
-              <span className="text-gray-400">$3.50</span>
+              <span className="text-gray-400">${shipping.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Total</span>
-              <span className="text-gray-400">$15.50</span>
+              <span className="text-gray-400">${total.toFixed(2)}</span>
             </div>
           </div>
         </div>

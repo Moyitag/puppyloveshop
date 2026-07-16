@@ -1,9 +1,76 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useCart } from "../context/CartContext";
+import { apiRequest, getCurrentClient } from "../services/api";
 
 function LastPayment() {
   const pink = "#E86D87";
+  const navigate = useNavigate();
+  const { items, deliveryAddress, paymentMethod, subtotal, shipping, total, clearCart } = useCart();
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handlePay = async () => {
+    const client = getCurrentClient();
+
+    if (!client?.id) {
+      navigate("/login");
+      return;
+    }
+    if (items.length === 0) {
+      navigate("/cart");
+      return;
+    }
+    if (!deliveryAddress) {
+      navigate("/domicilio");
+      return;
+    }
+    if (!paymentMethod) {
+      navigate("/delivery");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const cart = await apiRequest("/shoppingCart", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: client.id,
+          products: items.map(item => ({
+            productId: item.productId,
+            amount: item.amount,
+          })),
+        }),
+      });
+
+      await apiRequest("/sales", {
+        method: "POST",
+        body: JSON.stringify({
+          shoppingCartId: cart._id,
+          deliveryAddress: {
+            address: deliveryAddress.floor
+              ? `${deliveryAddress.street}, ${deliveryAddress.floor}`
+              : deliveryAddress.street,
+            city: deliveryAddress.city,
+            department: deliveryAddress.region,
+            reference: deliveryAddress.postalCode,
+          },
+          paymentMethod,
+          paymentStatus: "pendiente",
+        }),
+      });
+
+      clearCart();
+      setShowModal(true);
+    } catch (err) {
+      setError(err.message || "No se pudo procesar el pedido.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full min-h-screen bg-white px-20 py-12 font-sans relative">
@@ -33,13 +100,10 @@ function LastPayment() {
             <div className="border-t border-gray-100 border-b py-5 flex justify-between">
               <div>
                 <p className="text-[14px] font-bold text-black">
-                  Entrega exprés a domicilio
+                  Entrega a domicilio estándar
                 </p>
                 <p className="text-[14px] text-black mt-2">
-                  Recíbelo entre el lunes 16 y el martes 17
-                </p>
-                <p className="text-[14px] font-bold text-black mt-2">
-                  32,99 €
+                  Envío: ${shipping.toFixed(2)}
                 </p>
               </div>
 
@@ -53,16 +117,25 @@ function LastPayment() {
             {/* DIRECCIÓN */}
             <div className="border-b border-gray-100 py-5 flex justify-between">
               <div>
-                <p className="text-[14px] font-bold text-black">
-                  Calle A Quezaltepeque
-                </p>
-                <p className="text-[14px] text-black mt-2">
-                  Casa 10 Nejapa, San Salvador
-                </p>
-                <p className="text-[14px] text-black mt-2">
-                  Génesis Moya +503 71526223
-                </p>
-                <p className="text-[14px] text-black mt-2">El Salvador</p>
+                {deliveryAddress ? (
+                  <>
+                    <p className="text-[14px] font-bold text-black">
+                      {deliveryAddress.firstName} {deliveryAddress.lastName}
+                    </p>
+                    <p className="text-[14px] text-black mt-2">
+                      {deliveryAddress.street}
+                      {deliveryAddress.floor ? `, ${deliveryAddress.floor}` : ""}
+                    </p>
+                    <p className="text-[14px] text-black mt-2">
+                      {deliveryAddress.city}, {deliveryAddress.region}
+                    </p>
+                    <p className="text-[14px] text-black mt-2">
+                      +503 {deliveryAddress.phone} · {deliveryAddress.country}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-[14px] text-black">Sin dirección registrada.</p>
+                )}
               </div>
 
               <Link to="/domicilio">
@@ -77,9 +150,11 @@ function LastPayment() {
               <div className="flex justify-between">
                 <div className="flex items-center gap-5">
                   <div className="w-[45px] h-[30px] border border-black flex items-center justify-center text-blue-600 font-bold">
-                    P
+                    {paymentMethod === "tarjeta" ? "T" : "P"}
                   </div>
-                  <p className="text-[14px] font-bold text-black">PayPal</p>
+                  <p className="text-[14px] font-bold text-black">
+                    {paymentMethod === "tarjeta" ? "Tarjeta bancaria" : "PayPal"}
+                  </p>
                 </div>
 
                 <Link to="/payment">
@@ -88,40 +163,14 @@ function LastPayment() {
                   </button>
                 </Link>
               </div>
-
-              <p className="text-[12px] text-gray-400 mt-5">
-                Serás redirigido al sitio web de Paypal donde podrás completar el pago.
-              </p>
-            </div>
-
-            {/* OPCIONES */}
-            <div className="border-b border-gray-100 py-7 space-y-7">
-              <label className="flex items-center gap-5 cursor-pointer">
-                <input type="checkbox" className="hidden" />
-                <span
-                  className="w-7 h-7 rounded-full"
-                  style={{ backgroundColor: "#c75d7b" }}
-                ></span>
-                <span className="text-[13px] text-black">
-                  Solicitar factura
-                </span>
-              </label>
-
-              <label className="flex items-start gap-5 cursor-pointer">
-                <input type="checkbox" className="hidden" />
-                <span
-                  className="w-7 h-7 rounded-full mt-1"
-                  style={{ backgroundColor: "#c75d7b" }}
-                ></span>
-                <span className="text-[13px] text-black leading-5">
-                  He leído y acepto las{" "}
-                  <b>Condiciones de Compra</b> y entiendo la información sobre el
-                  uso de mis datos personales explicada en la{" "}
-                  <b>Política de Privacidad.</b>
-                </span>
-              </label>
             </div>
           </div>
+
+          {error && (
+            <p className="mt-6" style={{ color: "#d5556a" }}>
+              {error}
+            </p>
+          )}
 
           {/* BOTONES */}
           <div className="flex items-center justify-between mt-12 w-[650px]">
@@ -137,11 +186,12 @@ function LastPayment() {
 
             <button
               type="button"
-              onClick={() => setShowModal(true)}
-              className="w-[255px] h-[60px] rounded-md text-white text-[17px] font-bold leading-5"
+              onClick={handlePay}
+              disabled={loading}
+              className="w-[255px] h-[60px] rounded-md text-white text-[17px] font-bold leading-5 disabled:opacity-60"
               style={{ backgroundColor: pink }}
             >
-              Pagar y procesar su pedido
+              {loading ? "Procesando..." : "Pagar y procesar su pedido"}
             </button>
           </div>
         </div>
@@ -152,39 +202,25 @@ function LastPayment() {
             Resumen de compra
           </h2>
 
-          {/* PRODUCTO 1 */}
-          <div className="flex items-start gap-6 mb-16">
-            <img
-              src="/img/cart-product-1.png"
-              alt="Producto 1"
-              className="w-[95px] h-[110px] object-contain"
-            />
+          {items.map(item => (
+            <div key={item.productId} className="flex items-start gap-6 mb-9">
+              <img
+                src={item.image}
+                alt={item.productName}
+                className="w-[95px] h-[110px] object-contain"
+              />
 
-            <div>
-              <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
-                Huesos Masticables Grandes Sabor Pollo
-              </h3>
+              <div>
+                <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
+                  {item.productName}
+                </h3>
 
-              <p className="text-[14px] text-black mt-4">$6.00</p>
+                <p className="text-[14px] text-black mt-4">
+                  ${(item.price * item.amount).toFixed(2)}
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* PRODUCTO 2 */}
-          <div className="flex items-start gap-6 mb-9">
-            <img
-              src="/img/cart-product-2.png"
-              alt="Producto 2"
-              className="w-[95px] h-[110px] object-contain"
-            />
-
-            <div>
-              <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
-                Alimento Húmedo Cachorro Res
-              </h3>
-
-              <p className="text-[14px] text-black mt-4">$6.00</p>
-            </div>
-          </div>
+          ))}
 
           <div
             className="w-full h-[2px] mt-10 mb-8"
@@ -194,17 +230,17 @@ function LastPayment() {
           <div className="space-y-6 text-[17px]">
             <div className="flex justify-between">
               <span className="text-gray-400">Subtotal</span>
-              <span className="text-gray-400">$12.00</span>
+              <span className="text-gray-400">${subtotal.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Envío</span>
-              <span className="text-gray-400">$3.50</span>
+              <span className="text-gray-400">${shipping.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Total</span>
-              <span className="text-gray-400">$15.50</span>
+              <span className="text-gray-400">${total.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -212,12 +248,12 @@ function LastPayment() {
 
       <hr className="mt-40 border-t border-black" />
 
-      {/* MODAL PAGO EXITOSO */}
+      {/* MODAL PEDIDO REALIZADO */}
       {showModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="w-[380px] h-[430px] bg-white rounded-lg shadow-2xl flex flex-col items-center justify-center">
-            <h2 className="text-4xl font-bold text-black mb-14">
-              Pago exitoso
+            <h2 className="text-4xl font-bold text-black mb-14 text-center px-6">
+              Pedido realizado
             </h2>
 
             <div

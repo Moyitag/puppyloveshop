@@ -3,6 +3,15 @@ import { v2 as cloudinary } from "cloudinary";
 
 const productsController = {};
 
+const parseIfJson = (value) => {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
 //SELECT
 productsController.getAllProducts = async (req, res) => {
   try {
@@ -58,8 +67,8 @@ productsController.insertProduct = async (req, res) => {
       productName,
       description,
       productType,
-      categories,
-      variants,
+      categories: parseIfJson(categories),
+      variants: parseIfJson(variants),
       price,
       expirationDate,
       supplierId,
@@ -99,8 +108,8 @@ productsController.updateProduct = async (req, res) => {
       productName,
       description,
       productType,
-      categories,
-      variants,
+      categories: parseIfJson(categories),
+      variants: parseIfJson(variants),
       price,
       expirationDate,
       supplierId,

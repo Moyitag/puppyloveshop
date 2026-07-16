@@ -1,14 +1,24 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useCart } from "../context/CartContext";
+import { isAuthenticated } from "../services/api";
+
 function Cart() {
   const pink = "#E86D87";
+  const navigate = useNavigate();
+  const { items, updateAmount, removeItem, clearCart, subtotal, shipping, total } = useCart();
+
+  const handleCheckout = () => {
+    if (items.length === 0) return;
+    navigate(isAuthenticated() ? "/domicilio" : "/login");
+  };
 
   return (
     <div className="w-full min-h-screen bg-white px-16 py-6 font-sans">
       {/* Volver */}
-      <div className="flex items-center gap-2 text-sm" style={{ color: pink }}>
+      <Link to="/" className="flex items-center gap-2 text-sm w-fit" style={{ color: pink }}>
         <span className="text-2xl">‹</span>
         <span>Continuar comprando</span>
-      </div>
+      </Link>
 
       {/* Encabezado */}
       <div className="flex justify-between items-start mt-7">
@@ -16,10 +26,11 @@ function Cart() {
           <h1 className="text-3xl font-bold text-black">
             Carrito de compras
           </h1>
-          <p className="text-gray-400 mt-3">2 artículos en el carrito</p>
+          <p className="text-gray-400 mt-3">{items.length} artículo(s) en el carrito</p>
         </div>
 
         <button
+          onClick={clearCart}
           className="flex items-center gap-2 text-base"
           style={{ color: "#c75d7b" }}
         >
@@ -32,89 +43,59 @@ function Cart() {
       <div className="grid grid-cols-[1.4fr_0.9fr] gap-20 mt-10">
         {/* Productos */}
         <div className="space-y-10">
-          {/* Producto 1 */}
-          <div className="h-[180px] rounded-xl border-[3px] border-[#0094ff] shadow-lg flex items-center px-12">
-            <img
-              src="/img/cart-product-1.png"
-              alt="Producto 1"
-              className="w-[115px] h-[140px] object-contain"
-            />
+          {items.length === 0 && (
+            <p className="text-gray-400">Tu carrito está vacío.</p>
+          )}
 
-            <div className="flex-1 ml-8">
-              <p className="text-gray-400 font-bold uppercase">Alimento</p>
+          {items.map(item => (
+            <div
+              key={item.productId}
+              className="h-[180px] rounded-xl border border-gray-200 shadow-lg flex items-center px-12"
+            >
+              <img
+                src={item.image}
+                alt={item.productName}
+                className="w-[115px] h-[140px] object-contain"
+              />
 
-              <h3 className="text-black text-[17px] mt-4">
-                Huesos Masticables Grandes Sabor Pollo
-              </h3>
+              <div className="flex-1 ml-8">
+                <h3 className="text-black text-[17px] mt-4">
+                  {item.productName}
+                </h3>
 
-              <div className="flex items-center gap-5 mt-8">
+                <div className="flex items-center gap-5 mt-8">
+                  <button
+                    onClick={() => updateAmount(item.productId, item.amount - 1)}
+                    className="w-8 h-8 rounded-full text-white text-xl font-bold flex items-center justify-center"
+                    style={{ backgroundColor: "#c75d7b" }}
+                  >
+                    -
+                  </button>
+
+                  <span className="text-2xl font-semibold">{item.amount}</span>
+
+                  <button
+                    onClick={() => updateAmount(item.productId, item.amount + 1)}
+                    className="w-8 h-8 rounded-full text-white text-xl font-bold flex items-center justify-center"
+                    style={{ backgroundColor: "#c75d7b" }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-5">
+                <p className="text-2xl text-black">${(item.price * item.amount).toFixed(2)}</p>
                 <button
-                  className="w-8 h-8 rounded-full text-white text-xl font-bold flex items-center justify-center"
-                  style={{ backgroundColor: "#c75d7b" }}
+                  onClick={() => removeItem(item.productId)}
+                  className="text-2xl"
+                  style={{ color: "#9f4b68" }}
                 >
-                  -
-                </button>
-
-                <span className="text-2xl font-semibold">1</span>
-
-                <button
-                  className="w-8 h-8 rounded-full text-white text-xl font-bold flex items-center justify-center"
-                  style={{ backgroundColor: "#c75d7b" }}
-                >
-                  +
+                  🗑
                 </button>
               </div>
             </div>
-
-            <div className="flex items-center gap-5">
-              <p className="text-2xl text-black">$6.00</p>
-              <span className="text-2xl" style={{ color: "#9f4b68" }}>
-                🗑
-              </span>
-            </div>
-          </div>
-
-          {/* Producto 2 */}
-          <div className="h-[180px] rounded-xl border border-gray-200 shadow-lg flex items-center px-12">
-            <img
-              src="/img/cart-product-2.png"
-              alt="Producto 2"
-              className="w-[130px] h-[140px] object-contain"
-            />
-
-            <div className="flex-1 ml-8">
-              <p className="text-gray-400 font-bold uppercase">Alimento</p>
-
-              <h3 className="text-black text-[17px] mt-4">
-                Alimento Húmedo Cachorro Res
-              </h3>
-
-              <div className="flex items-center gap-5 mt-8">
-                <button
-                  className="w-8 h-8 rounded-full text-white text-xl font-bold flex items-center justify-center"
-                  style={{ backgroundColor: "#c75d7b" }}
-                >
-                  -
-                </button>
-
-                <span className="text-2xl font-semibold">1</span>
-
-                <button
-                  className="w-8 h-8 rounded-full text-white text-xl font-bold flex items-center justify-center"
-                  style={{ backgroundColor: "#c75d7b" }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-5">
-              <p className="text-2xl text-black">$6.00</p>
-              <span className="text-2xl" style={{ color: "#9f4b68" }}>
-                🗑
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Resumen */}
@@ -126,12 +107,12 @@ function Cart() {
           <div className="space-y-5 text-[17px]">
             <div className="flex justify-between">
               <span className="text-gray-400">Subtotal</span>
-              <span className="text-gray-400">$12.00</span>
+              <span className="text-gray-400">${subtotal.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Envío</span>
-              <span className="text-gray-400">$3.50</span>
+              <span className="text-gray-400">${shipping.toFixed(2)}</span>
             </div>
           </div>
 
@@ -143,45 +124,31 @@ function Cart() {
           <div className="space-y-5 text-[17px]">
             <div className="flex justify-between">
               <span className="text-gray-400">Total</span>
-              <span className="text-gray-400">$15.50</span>
-            </div>
-
-            <p className="text-gray-400">Codigo de descuento</p>
-
-            <div className="flex gap-6">
-              <input
-                type="text"
-                placeholder="Ingrese el codigo"
-                className="w-[170px] h-[38px] rounded-md border-2 border-[#b88799] bg-[#f8dfe5] text-center text-gray-400 outline-none"
-              />
-
-              <button className="w-[110px] h-[38px] rounded-md border-2 border-[#b88799] bg-[#f8dfe5] text-gray-400">
-                Aplicar
-              </button>
+              <span className="text-gray-400">${total.toFixed(2)}</span>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col items-center gap-5">
-  <Link to="/domicilio">
-    <button
-      type="button"
-      className="w-[245px] h-[44px] rounded-md text-white text-[17px] font-bold"
-      style={{ backgroundColor: pink }}
-    >
-      Proceder con pago
-    </button>
-  </Link>
+            <button
+              type="button"
+              onClick={handleCheckout}
+              disabled={items.length === 0}
+              className="w-[245px] h-[44px] rounded-md text-white text-[17px] font-bold disabled:opacity-50"
+              style={{ backgroundColor: pink }}
+            >
+              Proceder con pago
+            </button>
 
-  <Link to="/">
-    <button
-      type="button"
-      className="w-[245px] h-[42px] rounded-md bg-white text-[17px] font-bold border-2"
-      style={{ borderColor: pink }}
-    >
-      Continuar comprando
-    </button>
-  </Link>
-</div>
+            <Link to="/">
+              <button
+                type="button"
+                className="w-[245px] h-[42px] rounded-md bg-white text-[17px] font-bold border-2"
+                style={{ borderColor: pink }}
+              >
+                Continuar comprando
+              </button>
+            </Link>
+          </div>
 
           <div className="mt-12 space-y-6 text-gray-300 text-[14px]">
             <div className="flex items-center gap-4">
@@ -189,13 +156,6 @@ function Cart() {
                 ✓
               </span>
               <p>Envío gratuito en pedidos superiores a $50</p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="w-6 h-6 rounded-full bg-[#ffe8bf] flex items-center justify-center text-[#b88947]">
-                ↻
-              </span>
-              <p>Devoluciones fáciles en 30 días</p>
             </div>
 
             <div className="flex items-center gap-4">

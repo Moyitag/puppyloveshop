@@ -1,6 +1,32 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { login } from "../services/api";
 
 function Login() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError("Completa correo y contraseña.");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError("");
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "No se pudo iniciar sesión.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col">
       {/* Parte 1: franja superior rosada con logo */}
@@ -18,7 +44,10 @@ function Login() {
       {/* Parte 3: contenido principal centrado */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
         {/* Caja del login */}
-        <div className="w-full max-w-[380px] bg-white rounded-[20px] border border-[#cfcfcf] shadow-[0_4px_10px_rgba(0,0,0,0.15)] px-8 py-12">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-[380px] bg-white rounded-[20px] border border-[#cfcfcf] shadow-[0_4px_10px_rgba(0,0,0,0.15)] px-8 py-12"
+        >
           <h1
             className="text-center font-bold text-3xl tracking-normal"
             style={{ color: "#C36483"}}>
@@ -29,6 +58,8 @@ function Login() {
           <input
             type="email"
             placeholder="Correo"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             className="w-full h-[48px] bg-[#f6dce2] rounded-md px-5 mb-6 outline-none text-gray-700 placeholder:text-gray-500"
           />
 
@@ -36,6 +67,8 @@ function Login() {
           <input
             type="password"
             placeholder="Contraseña"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             className="w-full h-[48px] bg-[#f6dce2] rounded-md px-5 mb-2 outline-none text-gray-700 placeholder:text-gray-500"
           />
 
@@ -46,9 +79,19 @@ function Login() {
             </a>
           </div>
 
+          {error && (
+            <p className="text-center text-sm mb-4" style={{ color: "#d5556a" }}>
+              {error}
+            </p>
+          )}
+
           {/* Botón iniciar sesión */}
-          <button className="w-full h-[50px] rounded-md bg-[#E86D87] text-white text-[20px] font-bold mb-4 hover:opacity-95 transition">
-            <Link to="/">Iniciar sesión</Link>            
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-[50px] rounded-md bg-[#E86D87] text-white text-[20px] font-bold mb-4 hover:opacity-95 transition disabled:opacity-60"
+          >
+            {loading ? "Ingresando..." : "Iniciar sesión"}
           </button>
 
           {/* Botón registro */}
@@ -58,7 +101,7 @@ function Login() {
           >
             ¿Cliente nuevo? Regístrate aquí
           </Link>
-        </div>
+        </form>
 
         {/* Línea y texto inferior */}
         <div className="w-full max-w-[700px] mt-14">

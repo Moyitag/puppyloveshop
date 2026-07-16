@@ -17,7 +17,7 @@ export default function Empleados() {
   const loadEmployees = async () => {
     try {
       setError('');
-      setLista(await apiRequest('/employees'));
+      setLista(await apiRequest('/administrator'));
     } catch (err) {
       setError(err.message);
     }
@@ -28,10 +28,13 @@ export default function Empleados() {
   }, []);
 
   const openAdd = () => { setEditItem(null); setShowForm(true); };
-  const openEdit = empleado => { setEditItem(empleado); setShowForm(true); };
+  const openEdit = admin => {
+    setEditItem({ ...admin, activo: admin.status ? 'Si' : 'No' });
+    setShowForm(true);
+  };
 
   const remove = async id => {
-    await apiRequest(`/employees/${id}`, { method: 'DELETE' });
+    await apiRequest(`/administrator/${id}`, { method: 'DELETE' });
     setLista(l => l.filter(x => (x._id || x.id) !== id));
   };
 
@@ -40,8 +43,9 @@ export default function Empleados() {
     const payload = { ...item };
     delete payload._id;
     delete payload.id;
+    delete payload.activo;
 
-    await apiRequest(id ? `/employees/${id}` : '/employees', {
+    await apiRequest(id ? `/administrator/${id}` : '/administrator', {
       method: id ? 'PUT' : 'POST',
       body: toApiBody(payload),
     });
@@ -64,9 +68,7 @@ export default function Empleados() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Foto</th>
               <th>Nombre</th>
-              <th>Cargo</th>
               <th>Email</th>
               <th>Contrasena</th>
               <th>Estado</th>
@@ -75,24 +77,18 @@ export default function Empleados() {
           </thead>
           <tbody>
             {paginated.length === 0 && (
-              <tr><td colSpan={7} className="empty-state">Sin registros.</td></tr>
+              <tr><td colSpan={5} className="empty-state">Sin registros.</td></tr>
             )}
             {paginated.map(emp => {
               const id = emp._id || emp.id;
               return (
                 <tr key={id}>
-                  <td>
-                    {emp.foto
-                      ? <img src={emp.foto} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
-                      : <span style={{ fontSize: 28 }}>🐶</span>}
-                  </td>
-                  <td>{emp.nombre}</td>
-                  <td>{emp.cargo}</td>
+                  <td>{emp.fullName}</td>
                   <td>{emp.email}</td>
                   <td>{emp.password ? '********' : '-'}</td>
                   <td>
-                    <span className={emp.activo === 'Si' ? 'status-ok' : 'status-no'}>
-                      {emp.activo === 'Si' ? '✔' : '✘'}
+                    <span className={emp.status ? 'status-ok' : 'status-no'}>
+                      {emp.status ? '✔' : '✘'}
                     </span>
                   </td>
                   <td>

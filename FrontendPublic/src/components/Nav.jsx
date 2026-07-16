@@ -1,6 +1,18 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { getCurrentClient, isAuthenticated, logout } from '../services/api';
 
 function Nav() {
+  const navigate = useNavigate();
+  const client = getCurrentClient();
+
+  const handleAccountClick = async e => {
+    if (isAuthenticated()) {
+      e.preventDefault();
+      await logout();
+      navigate('/');
+    }
+  };
+
   return (
     <header className="w-full">
       {/* Parte 1: barra superior del navbar */}
@@ -29,13 +41,15 @@ function Nav() {
 
         {/* Parte 4: dirección */}
         <div className="flex items-center gap-2 text-white text-base px-6 py-3 rounded-lg cursor-pointer hover:bg-[#c94f69] transition">
-            <Link to="/Delivery">Agregar dirección</Link>          
+            <Link to="/domicilio">Agregar dirección</Link>
           <span className="text-xs">▼</span>
         </div>
 
         {/* Parte 5: botón de cuenta */}
         <div className="flex items-center gap-2 text-white text-base px-6 py-3 rounded-lg cursor-pointer hover:bg-[#c94f69] transition">
-          <Link to="/Login">Mi cuenta</Link>
+          <Link to={isAuthenticated() ? '/' : '/login'} onClick={handleAccountClick}>
+            {isAuthenticated() ? `Hola, ${client?.fullName?.split(' ')[0] || 'cliente'} (salir)` : 'Mi cuenta'}
+          </Link>
           <span className="text-xs">▼</span>
         </div>
 
@@ -56,7 +70,7 @@ function Nav() {
           Mascotas
         </Link>
 
-        <Link to="/Pets" className="text-[#E86D87] text-base font-medium hover:text-[#c94f69] transition">
+        <Link to="/pets" className="text-[#E86D87] text-base font-medium hover:text-[#c94f69] transition">
           Categorias
         </Link>
 
@@ -68,7 +82,7 @@ function Nav() {
           Servicios
         </Link>
 
-        <Link to="/Promotions" className="text-[#E86D87] text-base font-medium hover:text-[#c94f69] transition">
+        <Link to="/promotions" className="text-[#E86D87] text-base font-medium hover:text-[#c94f69] transition">
           Promociones
         </Link>
 

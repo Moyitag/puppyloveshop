@@ -37,12 +37,8 @@ app.use("/api/registerClient", registerClientRoutes);
 app.use("/api/loginClient", loginClientRoutes);
 app.use("/api/logout", logoutRoutes);
 
-//Administrator: solo un administrador autenticado puede gestionar administradores
-app.use(
-  "/api/administrator",
-  validateAuthCookie(["admin"]),
-  administratorRoutes
-);
+//Administrator: creación abierta (bootstrap), lectura/edición/borrado protegidas por ruta
+app.use("/api/administrator", administratorRoutes);
 
 //Suppliers: solo administradores gestionan proveedores
 app.use("/api/suppliers", validateAuthCookie(["admin"]), suppliersRoutes);

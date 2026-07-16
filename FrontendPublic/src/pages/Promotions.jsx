@@ -1,40 +1,19 @@
 import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { apiRequest } from "../services/api";
+import { useCart } from "../context/CartContext";
 
 function Promotions() {
   const pink = "#E86D87";
+  const { addItem } = useCart();
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState("");
 
-  const products = [
-    {
-      img: "/img/promo-product-1.png",
-      title: "Paté - Dieta Horneada Carne De Res",
-      price: "$20.00",
-    },
-    {
-      img: "/img/promo-product-2.png",
-      title: "Br For Cat - Adulto",
-      price: "$20.00",
-    },
-    {
-      img: "/img/promo-product-3.png",
-      title: "Coastal Pet - Perro Bozal Basket",
-      price: "$4.00",
-    },
-    {
-      img: "/img/promo-product-4.png",
-      title: "Jaula TK10 Grand Espacio para pájaro",
-      price: "$25.99",
-    },
-    {
-      img: "/img/promo-product-5.png",
-      title: "Littleone conejo sin alimento para cone silvestre",
-      price: "$35.00",
-    },
-    {
-      img: "/img/promo-product-6.png",
-      title: "Limpiador de Raspador de Algas con Mango Largo",
-      price: "$7.00",
-    },
-  ];
+  useEffect(() => {
+    apiRequest("/products")
+      .then(setProducts)
+      .catch(err => setError(err.message));
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-white px-16 py-6 font-sans">
@@ -63,10 +42,15 @@ function Promotions() {
 
         {/* PRODUCTOS */}
         <main className="flex-1">
+          {error && <p className="text-red-500">{error}</p>}
+          {!error && products.length === 0 && (
+            <p className="text-gray-400">No hay promociones disponibles.</p>
+          )}
+
           <div className="grid grid-cols-3 gap-x-16 gap-y-24 max-w-[980px]">
-            {products.map((product, index) => (
+            {products.map(product => (
               <div
-                key={index}
+                key={product._id}
                 className="relative w-[270px] h-[410px] bg-white rounded-lg border border-gray-300 shadow-lg px-8 py-8 flex flex-col"
               >
                 {/* ETIQUETA OFERTA */}
@@ -77,20 +61,21 @@ function Promotions() {
                 </div>
 
                 <img
-                  src={product.img}
-                  alt={product.title}
+                  src={product.images?.[0]}
+                  alt={product.productName}
                   className="w-full h-[190px] object-contain mt-6"
                 />
 
                 <h3 className="text-[15px] font-semibold text-black leading-tight mt-5 min-h-[45px]">
-                  {product.title}
+                  {product.productName}
                 </h3>
 
                 <p className="text-[15px] mt-2" style={{ color: pink }}>
-                  {product.price}
+                  ${product.price}
                 </p>
 
                 <button
+                  onClick={() => addItem(product)}
                   className="w-full h-[44px] rounded-md text-white text-[15px] font-bold mt-auto"
                   style={{ backgroundColor: pink }}
                 >

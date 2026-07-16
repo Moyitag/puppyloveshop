@@ -1,7 +1,15 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useCart } from "../context/CartContext";
 
 function Payment() {
   const pink = "#E86D87";
+  const navigate = useNavigate();
+  const { items, subtotal, shipping, total } = useCart();
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
 
   return (
     <div className="w-full min-h-screen bg-white px-20 py-12 font-sans">
@@ -35,7 +43,9 @@ function Payment() {
               <input
                 type="text"
                 placeholder="Número de tarjeta"
-                className="w-full h-[42px] border border-gray-300 rounded-md pl-20 pr-4 outline-none text-gray-500 text-[13px]"
+                value={cardNumber}
+                onChange={e => setCardNumber(e.target.value)}
+                className="w-full h-[42px] border border-gray-300 rounded-md pl-20 pr-4 outline-none text-gray-700 text-[13px]"
               />
             </div>
 
@@ -43,20 +53,26 @@ function Payment() {
               <input
                 type="text"
                 placeholder="Válido hasta"
-                className="h-[42px] border border-gray-300 rounded-md px-4 outline-none text-gray-500 text-[13px]"
+                value={expiry}
+                onChange={e => setExpiry(e.target.value)}
+                className="h-[42px] border border-gray-300 rounded-md px-4 outline-none text-gray-700 text-[13px]"
               />
 
               <input
                 type="text"
                 placeholder="CVV"
-                className="h-[42px] border border-gray-300 rounded-md px-4 outline-none text-gray-500 text-[13px]"
+                value={cvv}
+                onChange={e => setCvv(e.target.value)}
+                className="h-[42px] border border-gray-300 rounded-md px-4 outline-none text-gray-700 text-[13px]"
               />
             </div>
 
             <input
               type="text"
               placeholder="Titular de la tarjeta"
-              className="w-full h-[42px] border border-gray-300 rounded-md px-4 outline-none text-gray-500 text-[13px] mt-7"
+              value={cardHolder}
+              onChange={e => setCardHolder(e.target.value)}
+              className="w-full h-[42px] border border-gray-300 rounded-md px-4 outline-none text-gray-700 text-[13px] mt-7"
             />
           </div>
 
@@ -72,15 +88,14 @@ function Payment() {
               </button>
             </Link>
 
-            <Link to="/lastpayment">
-              <button
-                type="button"
-                className="w-[255px] h-[42px] rounded-md text-white text-[17px] font-bold"
-                style={{ backgroundColor: pink }}
-              >
-                Continuar
-              </button>
-            </Link>
+            <button
+              type="button"
+              onClick={() => navigate("/lastpayment")}
+              className="w-[255px] h-[42px] rounded-md text-white text-[17px] font-bold"
+              style={{ backgroundColor: pink }}
+            >
+              Continuar
+            </button>
           </div>
         </div>
 
@@ -90,39 +105,25 @@ function Payment() {
             Resumen de compra
           </h2>
 
-          {/* PRODUCTO 1 */}
-          <div className="flex items-start gap-6 mb-16">
-            <img
-              src="/img/cart-product-1.png"
-              alt="Producto 1"
-              className="w-[95px] h-[110px] object-contain"
-            />
+          {items.map(item => (
+            <div key={item.productId} className="flex items-start gap-6 mb-9">
+              <img
+                src={item.image}
+                alt={item.productName}
+                className="w-[95px] h-[110px] object-contain"
+              />
 
-            <div>
-              <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
-                Huesos Masticables Grandes Sabor Pollo
-              </h3>
+              <div>
+                <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
+                  {item.productName}
+                </h3>
 
-              <p className="text-[14px] text-black mt-4">$6.00</p>
+                <p className="text-[14px] text-black mt-4">
+                  ${(item.price * item.amount).toFixed(2)}
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* PRODUCTO 2 */}
-          <div className="flex items-start gap-6 mb-9">
-            <img
-              src="/img/cart-product-2.png"
-              alt="Producto 2"
-              className="w-[95px] h-[110px] object-contain"
-            />
-
-            <div>
-              <h3 className="text-[14px] font-semibold leading-tight text-black w-[170px]">
-                Alimento Húmedo Cachorro Res
-              </h3>
-
-              <p className="text-[14px] text-black mt-4">$6.00</p>
-            </div>
-          </div>
+          ))}
 
           <div
             className="w-full h-[2px] mt-10 mb-8"
@@ -132,17 +133,17 @@ function Payment() {
           <div className="space-y-6 text-[17px]">
             <div className="flex justify-between">
               <span className="text-gray-400">Subtotal</span>
-              <span className="text-gray-400">$12.00</span>
+              <span className="text-gray-400">${subtotal.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Envío</span>
-              <span className="text-gray-400">$3.50</span>
+              <span className="text-gray-400">${shipping.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-400">Total</span>
-              <span className="text-gray-400">$15.50</span>
+              <span className="text-gray-400">${total.toFixed(2)}</span>
             </div>
           </div>
         </div>

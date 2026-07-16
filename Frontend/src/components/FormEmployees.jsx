@@ -1,25 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import ImageDropzone from './ImageDropzone.jsx';
 
 const INITIAL = {
-  nombre: '',
-  telefono: '',
+  fullName: '',
   email: '',
   password: '',
-  cargo: '',
   activo: 'Si',
-  foto: '',
 };
 
 export default function FormEmployees({ empleado, onSave, onClose }) {
   const [form, setForm] = useState(INITIAL);
-  const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (empleado) setForm({ ...empleado, password: '' });
     else setForm(INITIAL);
-    setImageFile(null);
     setError('');
   }, [empleado]);
 
@@ -27,17 +21,17 @@ export default function FormEmployees({ empleado, onSave, onClose }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.nombre || !form.email) {
+    if (!form.fullName || !form.email) {
       setError('Nombre y email son obligatorios.');
       return;
     }
     if (!empleado && !form.password) {
-      setError('La contrasena es obligatoria para crear un empleado.');
+      setError('La contrasena es obligatoria para crear un administrador.');
       return;
     }
     try {
       setError('');
-      await onSave({ ...form, imageFile });
+      await onSave({ ...form, status: form.activo === 'Si' });
     } catch (err) {
       setError(err.message || 'No se pudo guardar.');
     }
@@ -50,25 +44,14 @@ export default function FormEmployees({ empleado, onSave, onClose }) {
         <h3 className="modal-title">Empleados</h3>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Nombre</label>
-              <input
-                name="nombre"
-                value={form.nombre}
-                onChange={set}
-                placeholder="Nombre completo"
-              />
-            </div>
-            <div className="form-group">
-              <label>Teléfono</label>
-              <input
-                name="telefono"
-                value={form.telefono}
-                onChange={set}
-                placeholder="000-000-0000"
-              />
-            </div>
+          <div className="form-group">
+            <label>Nombre</label>
+            <input
+              name="fullName"
+              value={form.fullName}
+              onChange={set}
+              placeholder="Nombre completo"
+            />
           </div>
 
           <div className="form-group">
@@ -89,21 +72,9 @@ export default function FormEmployees({ empleado, onSave, onClose }) {
               type="password"
               value={form.password}
               onChange={set}
-              placeholder="Contraseña del empleado"
+              placeholder="Contraseña del administrador"
             />
           </div>
-
-          <div className="form-group">
-            <label>Cargo</label>
-            <input
-              name="cargo"
-              value={form.cargo}
-              onChange={set}
-              placeholder="Ej: Veterinario"
-            />
-          </div>
-
-          <ImageDropzone value={form.foto} file={imageFile} onFileChange={setImageFile} />
 
           <div className="form-group">
             <label>¿Están activos?</label>

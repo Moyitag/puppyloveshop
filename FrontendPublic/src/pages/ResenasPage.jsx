@@ -1,72 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { apiRequest, getCurrentClient, isAuthenticated } from "../services/api";
 
-// ─── Datos de ejemplo ────────────────────────────────────────────────────────
-const PRODUCTOS = [
-  "Cama ortopédica para mascotas",
-  "Collar reflectante ajustable",
-  "Juguete interactivo dispensador",
-  "Shampoo natural para perros",
-  "Arena sanitaria premium para gatos",
-  "Comedero automático programable",
-  "Arnés antipresión",
-  "Snacks dentales saludables",
-];
-
-const RESENAS_INICIALES = [
-  {
-    id: 1,
-    nombre: "Carlos M.",
-    producto: "Cama ortopédica para mascotas",
-    estrellas: 5,
-    titulo: "¡Mi Pitbull la adora!",
-    descripcion:
-      "Tengo un Pitbull que destruye todo en 5 minutos. Esta camita lleva dos semanas entera, lo cual es un récord mundial en esta casa. ¡Muy recomendada, completamente profesional!",
-  },
-  {
-    id: 2,
-    nombre: "Laura M.",
-    producto: "Cama ortopédica para mascotas",
-    estrellas: 5,
-    titulo: "Perfecta para mi Golden",
-    descripcion:
-      "Compré la cama para mi Golden Retriever que ya no duerme bien y, sinceramente, ahora duerme mejor que yo. A veces me dan ganas de tirarme yo también. ¡10/10 sin consulta!",
-  },
-  {
-    id: 3,
-    nombre: "Diego R.",
-    producto: "Juguete interactivo dispensador",
-    estrellas: 5,
-    titulo: "Mi gato por fin descansa",
-    descripcion:
-      "Mis cortinas ya no pueden descansar en paz. Al llevar la plataforma de arriba para jugarme a todo desde las alturas. Fácil de armar. ¡Muy recomendado!",
-  },
-  {
-    id: 4,
-    nombre: "Jamie S.",
-    producto: "Arena sanitaria premium para gatos",
-    estrellas: 5,
-    titulo: "Las semillas llegaron fresquísimas",
-    descripcion:
-      "Se nota que las semillas son frescas y no pasan tanto polvo al fondo del tazón. Mi lorito se va tres veces de cabeza al comedero, lo sé desde la fontanería.",
-  },
-  {
-    id: 5,
-    nombre: "Elena V.",
-    producto: "Collar reflectante ajustable",
-    estrellas: 5,
-    titulo: "A mi perico le encanta",
-    descripcion:
-      "A mi perico le encanta su reflejo, se pasa horas contemplándose en él. Ahora habla solo frente al espejo. El material es de muy buena calidad y muy detallado.",
-  },
-  {
-    id: 6,
-    nombre: "Ricardo F.",
-    producto: "Comedero automático programable",
-    estrellas: 5,
-    titulo: "El acuario quedó genial",
-    descripcion:
-      "Lo de un lopon genial el acuario. Mis peces entran y salen de los castillitos al unísono. El material es muy resistente y el color de los adornos perfecto, muy detallado.",
-  },
+const EXPERIENCIAS = [
+  "Compra en línea",
+  "Servicio en tienda",
+  "Entrega a domicilio",
+  "Atención al cliente",
 ];
 
 // ─── Componente de estrellas ──────────────────────────────────────────────────
@@ -97,7 +36,6 @@ function Estrellas({ valor, onChange, size = 18 }) {
 
 // ─── Avatar persona ───────────────────────────────────────────────────────────
 function AvatarPersona({ nombre }) {
-  const inicial = nombre?.[0]?.toUpperCase() || "?";
   const colores = ["#F4A261", "#E76F51", "#2A9D8F", "#E9C46A", "#264653", "#A8DADC"];
   const color = colores[nombre?.charCodeAt(0) % colores.length] || "#F4A261";
   return (
@@ -124,6 +62,9 @@ function AvatarPersona({ nombre }) {
 
 // ─── Tarjeta de reseña ────────────────────────────────────────────────────────
 function TarjetaResena({ resena }) {
+  const nombre = resena.userId?.fullName || "Anónimo";
+  const producto = resena.productId?.productName;
+
   return (
     <div
       style={{
@@ -149,17 +90,17 @@ function TarjetaResena({ resena }) {
     >
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <AvatarPersona nombre={resena.nombre} />
+        <AvatarPersona nombre={nombre} />
         <div>
           <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#333", fontFamily: "'Nunito', sans-serif" }}>
-            {resena.nombre}
+            {nombre}
           </p>
-          <Estrellas valor={resena.estrellas} size={14} />
+          <Estrellas valor={resena.rating} size={14} />
         </div>
       </div>
 
       {/* Badge producto */}
-      {resena.producto && (
+      {producto && (
         <span
           style={{
             display: "inline-block",
@@ -174,17 +115,17 @@ function TarjetaResena({ resena }) {
             letterSpacing: 0.3,
           }}
         >
-          🐾 {resena.producto}
+          🐾 {producto}
         </span>
       )}
 
       {/* Contenido */}
       <div>
         <p style={{ margin: "0 0 4px", fontWeight: 700, fontSize: 14, color: "#444", fontFamily: "'Nunito', sans-serif" }}>
-          {resena.titulo}
+          {resena.title}
         </p>
         <p style={{ margin: 0, fontSize: 13, color: "#666", lineHeight: 1.6, fontFamily: "'Nunito', sans-serif" }}>
-          "{resena.descripcion}"
+          "{resena.details}"
         </p>
       </div>
     </div>
@@ -192,24 +133,48 @@ function TarjetaResena({ resena }) {
 }
 
 // ─── Modal agregar reseña ─────────────────────────────────────────────────────
-function ModalResena({ onCerrar, onGuardar }) {
+function ModalResena({ productos, onCerrar, onGuardar }) {
   const [form, setForm] = useState({
-    nombre: "",
-    producto: "",
+    productId: "",
     estrellas: 0,
     titulo: "",
+    experienceType: "",
     descripcion: "",
+    certifiedPurchase: false,
   });
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleGuardar = () => {
-    if (!form.nombre.trim() || form.estrellas === 0 || !form.descripcion.trim()) {
-      setError("Por favor completa tu nombre, calificación y descripción.");
+  const handleGuardar = async () => {
+    if (!isAuthenticated()) {
+      setError("Debes iniciar sesión para escribir una reseña.");
       return;
     }
-    onGuardar({ ...form, id: Date.now() });
-    setEnviado(true);
+    if (!form.productId || form.estrellas === 0 || !form.experienceType || !form.descripcion.trim()) {
+      setError("Por favor selecciona un producto, calificación, experiencia y descripción.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      const client = getCurrentClient();
+      await onGuardar({
+        rating: form.estrellas,
+        title: form.titulo || "Sin título",
+        experienceType: form.experienceType,
+        details: form.descripcion,
+        userId: client.id,
+        productId: form.productId,
+        certifiedPurchase: form.certifiedPurchase,
+      });
+      setEnviado(true);
+    } catch (err) {
+      setError(err.message || "No se pudo guardar la reseña.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -237,6 +202,8 @@ function ModalResena({ onCerrar, onGuardar }) {
           boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           position: "relative",
           animation: "modalIn 0.25s cubic-bezier(.34,1.56,.64,1)",
+          maxHeight: "90vh",
+          overflowY: "auto",
         }}
       >
         <style>{`
@@ -318,34 +285,34 @@ function ModalResena({ onCerrar, onGuardar }) {
               </div>
             </div>
 
-            {/* Nombre */}
+            {/* Producto */}
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Tu nombre *</label>
-              <input
-                type="text"
-                placeholder="Ej. María G."
-                value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                style={inputStyle}
-              />
-            </div>
-
-            {/* Producto opcional */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>
-                Producto (opcional){" "}
-                <span style={{ color: "#bbb", fontWeight: 400, fontSize: 11 }}>— ¿A qué producto calificás?</span>
-              </label>
+              <label style={labelStyle}>Producto *</label>
               <select
-                value={form.producto}
-                onChange={(e) => setForm({ ...form, producto: e.target.value })}
-                style={{ ...inputStyle, color: form.producto ? "#333" : "#aaa" }}
+                value={form.productId}
+                onChange={(e) => setForm({ ...form, productId: e.target.value })}
+                style={{ ...inputStyle, color: form.productId ? "#333" : "#aaa" }}
               >
                 <option value="">Seleccionar producto...</option>
-                {PRODUCTOS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
+                {productos.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.productName}
                   </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tipo de experiencia */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Tipo de experiencia *</label>
+              <select
+                value={form.experienceType}
+                onChange={(e) => setForm({ ...form, experienceType: e.target.value })}
+                style={{ ...inputStyle, color: form.experienceType ? "#333" : "#aaa" }}
+              >
+                <option value="">Seleccionar...</option>
+                {EXPERIENCIAS.map((e) => (
+                  <option key={e} value={e}>{e}</option>
                 ))}
               </select>
             </div>
@@ -363,7 +330,7 @@ function ModalResena({ onCerrar, onGuardar }) {
             </div>
 
             {/* Descripción */}
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Descripción *</label>
               <textarea
                 placeholder="Cuéntanos tu experiencia..."
@@ -374,6 +341,17 @@ function ModalResena({ onCerrar, onGuardar }) {
               />
             </div>
 
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={form.certifiedPurchase}
+                onChange={(e) => setForm({ ...form, certifiedPurchase: e.target.checked })}
+              />
+              <span style={{ fontSize: 13, color: "#666", fontFamily: "'Nunito', sans-serif" }}>
+                Es una compra verificada
+              </span>
+            </label>
+
             {error && (
               <p style={{ color: "#e91e8c", fontSize: 13, margin: "-12px 0 14px", fontFamily: "'Nunito', sans-serif" }}>
                 ⚠️ {error}
@@ -382,6 +360,7 @@ function ModalResena({ onCerrar, onGuardar }) {
 
             <button
               onClick={handleGuardar}
+              disabled={loading}
               style={{
                 width: "100%",
                 background: "linear-gradient(135deg, #f06292, #e91e8c)",
@@ -392,15 +371,14 @@ function ModalResena({ onCerrar, onGuardar }) {
                 fontFamily: "'Nunito', sans-serif",
                 fontWeight: 800,
                 fontSize: 15,
-                cursor: "pointer",
+                cursor: loading ? "default" : "pointer",
+                opacity: loading ? 0.7 : 1,
                 letterSpacing: 0.3,
                 boxShadow: "0 4px 16px #e91e8c44",
                 transition: "opacity 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              Enviar reseña 🐾
+              {loading ? "Enviando..." : "Enviar reseña 🐾"}
             </button>
           </>
         )}
@@ -435,26 +413,41 @@ const inputStyle = {
 
 // ─── Página principal de Reseñas ──────────────────────────────────────────────
 export default function ResenasPage() {
-  const [resenas, setResenas] = useState(RESENAS_INICIALES);
+  const [resenas, setResenas] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [filtroProducto, setFiltroProducto] = useState("");
+  const [error, setError] = useState("");
 
-  const handleGuardar = (nueva) => {
-    setResenas((prev) => [nueva, ...prev]);
-    setTimeout(() => setModalAbierto(false), 1800);
+  const loadReviews = () =>
+    apiRequest("/productReview")
+      .then(setResenas)
+      .catch((err) => setError(err.message));
+
+  useEffect(() => {
+    loadReviews();
+    apiRequest("/products").then(setProductos).catch(() => setProductos([]));
+  }, []);
+
+  const handleGuardar = async (payload) => {
+    await apiRequest("/productReview", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    await loadReviews();
   };
 
   const resenasFiltradas = resenas.filter((r) => {
-    const texto = `${r.nombre} ${r.titulo} ${r.descripcion}`.toLowerCase();
+    const texto = `${r.userId?.fullName || ""} ${r.title} ${r.details}`.toLowerCase();
     const matchBusqueda = texto.includes(busqueda.toLowerCase());
-    const matchProducto = !filtroProducto || r.producto === filtroProducto;
+    const matchProducto = !filtroProducto || r.productId?._id === filtroProducto;
     return matchBusqueda && matchProducto;
   });
 
   const promedioEstrellas =
     resenas.length > 0
-      ? (resenas.reduce((s, r) => s + r.estrellas, 0) / resenas.length).toFixed(1)
+      ? (resenas.reduce((s, r) => s + r.rating, 0) / resenas.length).toFixed(1)
       : 0;
 
   return (
@@ -559,12 +552,16 @@ export default function ResenasPage() {
               }}
             >
               <option value="">Todos los productos</option>
-              {PRODUCTOS.map((p) => (
-                <option key={p} value={p}>{p}</option>
+              {productos.map((p) => (
+                <option key={p._id} value={p._id}>{p.productName}</option>
               ))}
             </select>
           </div>
         </div>
+
+        {error && (
+          <p style={{ textAlign: "center", color: "#e91e8c", marginTop: 20 }}>{error}</p>
+        )}
 
         {/* ── Grid de reseñas ── */}
         <div
@@ -578,7 +575,7 @@ export default function ResenasPage() {
           }}
         >
           {resenasFiltradas.length > 0 ? (
-            resenasFiltradas.map((r) => <TarjetaResena key={r.id} resena={r} />)
+            resenasFiltradas.map((r) => <TarjetaResena key={r._id} resena={r} />)
           ) : (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 0", color: "#ccc" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🐾</div>
@@ -590,7 +587,11 @@ export default function ResenasPage() {
 
       {/* ── Modal ── */}
       {modalAbierto && (
-        <ModalResena onCerrar={() => setModalAbierto(false)} onGuardar={handleGuardar} />
+        <ModalResena
+          productos={productos}
+          onCerrar={() => setModalAbierto(false)}
+          onGuardar={handleGuardar}
+        />
       )}
     </>
   );
