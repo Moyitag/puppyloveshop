@@ -78,10 +78,6 @@ function Nav() {
           Reseñas
         </Link>
 
-        <Link to="/services" className="text-[#E86D87] text-base font-medium hover:text-[#c94f69] transition">
-          Servicios
-        </Link>
-
         <Link to="/promotions" className="text-[#E86D87] text-base font-medium hover:text-[#c94f69] transition">
           Promociones
         </Link>

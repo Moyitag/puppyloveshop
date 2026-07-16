@@ -5,7 +5,6 @@ import Nav from "./components/Nav";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import AboutUs from "./pages/AboutUs";
-import Services from "./pages/services";
 import Promotions from "./pages/Promotions";
 import Login from "./pages/Login";
 import Register from "./pages/CreateAcount";
@@ -30,7 +29,6 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/aboutUs" element={<AboutUs />} />
-        <Route path="/services" element={<Services />} />
         <Route path="/promotions" element={<Promotions />} />
         <Route path="/resenas" element={<ResenasPage />} />
         <Route path="/login" element={<Login />} />

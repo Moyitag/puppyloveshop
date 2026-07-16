@@ -16,6 +16,7 @@ export default function InventarioForm({ producto, onSave, onClose }) {
   const [form, setForm] = useState(INITIAL);
   const [imageFile, setImageFile] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
+  const [suppliersError, setSuppliersError] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -39,7 +40,10 @@ export default function InventarioForm({ producto, onSave, onClose }) {
   useEffect(() => {
     apiRequest('/suppliers')
       .then(setSuppliers)
-      .catch(() => setSuppliers([]));
+      .catch(err => {
+        setSuppliers([]);
+        setSuppliersError(err.message || 'No se pudieron cargar los proveedores.');
+      });
   }, []);
 
   const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -97,7 +101,14 @@ export default function InventarioForm({ producto, onSave, onClose }) {
                   <option key={s._id} value={s._id}>{s.name}</option>
                 ))}
               </select>
-              {suppliers.length === 0 && (
+              {suppliersError && (
+                <span style={{ fontSize: 12, color: '#cc3344' }}>
+                  Error cargando proveedores: {suppliersError}
+                  {(suppliersError.toLowerCase().includes('cookie') || suppliersError.toLowerCase().includes('denied')) &&
+                    ' — tu sesión de administrador venció, cierra sesión y vuelve a entrar.'}
+                </span>
+              )}
+              {!suppliersError && suppliers.length === 0 && (
                 <span style={{ fontSize: 12, color: '#cc3344' }}>No hay proveedores registrados.</span>
               )}
             </div>

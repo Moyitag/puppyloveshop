@@ -20,9 +20,6 @@ function Footer() {
           <Link to="/category" className="text-[#E86D87] hover:text-[#c95c74] transition">
             Productos
           </Link>
-          <Link to="/services" className="text-[#E86D87] hover:text-[#c95c74] transition">
-            Servicios
-          </Link>
           <Link to="/feedback" className="text-[#E86D87] hover:text-[#c95c74] transition">
             Reseñas
           </Link>

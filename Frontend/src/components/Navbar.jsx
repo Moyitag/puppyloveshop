@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TABS = ['Empleados', 'Inventario', 'Gastos', 'Planes'];
+const TABS = ['Empleados', 'Inventario', 'Compras', 'Proveedores'];
 
 export default function Navbar({ activeTab, onTabChange, onLogout }) {
   return (
