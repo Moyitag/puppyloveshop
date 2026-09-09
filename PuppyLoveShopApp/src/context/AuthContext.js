@@ -19,22 +19,23 @@ export function AuthProvider({ children }) {
     })();
   }, []);
 
+  // El backend responde { message, id, fullName } y deja la sesión en una cookie httpOnly.
+  // No hay token que guardar: axios reenvía la cookie automáticamente en cada request (withCredentials).
   const login = async (email, password) => {
     const res = await loginClient({ email, password });
-    const { token, client: clientData } = res.data;
-    await AsyncStorage.setItem("puppy_token", token);
+    const clientData = { id: res.data.id, fullName: res.data.fullName, email };
     await AsyncStorage.setItem("puppy_client", JSON.stringify(clientData));
     setClient(clientData);
     return clientData;
   };
 
-  const register = async (data) => {
-    const res = await registerClient(data);
+  // Campos reales del backend: fullName, email, password, phoneNumber
+  const register = async ({ fullName, email, password, phoneNumber }) => {
+    const res = await registerClient({ fullName, email, password, phoneNumber });
     return res.data;
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem("puppy_token");
     await AsyncStorage.removeItem("puppy_client");
     setClient(null);
   };

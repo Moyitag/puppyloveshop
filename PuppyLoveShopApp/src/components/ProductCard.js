@@ -2,19 +2,23 @@ import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { colors, spacing, radius } from "../theme";
 
+// Producto real: { productName, images[], price, variants: [{ size, color, stock }] }
 export default function ProductCard({ product, onPress }) {
+  const totalStock = (product.variants || []).reduce((s, v) => s + (v.stock || 0), 0);
+  const hasStock = (product.variants || []).length === 0 || totalStock > 0;
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <Image
-        source={{ uri: product.image || "https://via.placeholder.com/150" }}
+        source={{ uri: product.images?.[0] || "https://via.placeholder.com/150" }}
         style={styles.image}
       />
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
-          {product.name}
+          {product.productName}
         </Text>
         <Text style={styles.price}>${Number(product.price).toFixed(2)}</Text>
-        {product.stock <= 0 && <Text style={styles.outOfStock}>Agotado</Text>}
+        {!hasStock && <Text style={styles.outOfStock}>Agotado</Text>}
       </View>
     </TouchableOpacity>
   );

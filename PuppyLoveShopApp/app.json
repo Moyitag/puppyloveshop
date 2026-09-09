@@ -8,10 +8,17 @@
     "splash": {
       "backgroundColor": "#FFF8F3"
     },
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "supportsTablet": true },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "package": "com.ricaldone.puppyloveshop"
-    }
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
   }
 }

@@ -1,47 +1,45 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Cambia esto por la URL real de tu backend (IP local en desarrollo, dominio en producción)
+// Cambia esto por la IP local de tu PC (donde corre "npm start" del backend) y el puerto 4000
 export const API_URL = "http://192.168.1.100:4000/api";
 
 const api = axios.create({
   baseURL: API_URL,
   timeout: 15000,
+  withCredentials: true, // el backend usa cookie httpOnly (authCookie) para sesión
 });
 
-// Adjunta el JWT guardado a cada request
-api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem("puppy_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// --- Auth ---
-export const loginClient = (data) => api.post("/clients/login", data);
-export const registerClient = (data) => api.post("/clients/register", data);
+// --- Auth (Clients) ---
+// Backend real: POST /api/registerClient  { fullName, email, password, phoneNumber }
+export const registerClient = (data) => api.post("/registerClient", data);
+// Backend real: POST /api/loginClient  { email, password } -> setea cookie httpOnly
+// y responde { message, id, fullName }
+export const loginClient = (data) => api.post("/loginClient", data);
+export const logout = () => api.post("/logout");
 
 // --- Products ---
+// Campos reales: productName, images[], description, productType, categories[],
+// variants: [{ size, color, stock }], price, supplierId
 export const getProducts = () => api.get("/products");
 export const getProductById = (id) => api.get(`/products/${id}`);
-export const getSubCategories = () => api.get("/subcategory");
-export const getProductsBySubCategory = (subCategoryId) =>
-  api.get(`/products?subCategoryId=${subCategoryId}`);
 
-// --- Reviews ---
+// --- Reviews (ProductReview) ---
+// Campos reales: rating, title, experienceType, details, userId, productId, certifiedPurchase
 export const getReviewsByProduct = (productId) =>
-  api.get(`/productreview/product/${productId}`);
-export const createReview = (data) => api.post("/productreview", data);
+  api.get(`/productReview/product/${productId}`);
+export const createReview = (data) => api.post("/productReview", data);
 
-// --- Cart ---
-export const getCart = (clientId) => api.get(`/shoppingcart/${clientId}`);
-export const addToCart = (data) => api.post("/shoppingcart", data);
-export const updateCartItem = (id, data) => api.put(`/shoppingcart/${id}`, data);
-export const removeFromCart = (id) => api.delete(`/shoppingcart/${id}`);
+// --- ShoppingCart ---
+// No existe "un carrito por cliente" con endpoint propio: se listan todos y se filtra por userId.
+// products: [{ productId, amount, subtotal }], total, discount, totalWithDiscount
+export const getAllCarts = () => api.get("/shoppingCart");
+export const createCart = (data) => api.post("/shoppingCart", data);
+export const updateCart = (cartId, data) => api.put(`/shoppingCart/${cartId}`, data);
+export const deleteCart = (cartId) => api.delete(`/shoppingCart/${cartId}`);
 
-// --- Sales (checkout) ---
+// --- Sales ---
+// Se crea a partir de un carrito ya existente: shoppingCartId, deliveryAddress, paymentMethod
+export const getAllSales = () => api.get("/sales");
 export const createSale = (data) => api.post("/sales", data);
-export const getSalesByClient = (clientId) => api.get(`/sales/client/${clientId}`);
 
 export default api;

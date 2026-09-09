@@ -13,21 +13,21 @@ import { colors, spacing, radius } from "../theme";
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
+  // Campos reales del backend: fullName, email, password, phoneNumber (todos requeridos)
   const [form, setForm] = useState({
-    name: "",
-    lastName: "",
+    fullName: "",
     email: "",
     password: "",
-    phone: "",
-    address: "",
+    phoneNumber: "",
   });
   const [loading, setLoading] = useState(false);
 
   const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   const handleRegister = async () => {
-    if (!form.name || !form.email || !form.password) {
-      Alert.alert("Campos requeridos", "Nombre, correo y contraseña son obligatorios.");
+    const { fullName, email, password, phoneNumber } = form;
+    if (!fullName || !email || !password || !phoneNumber) {
+      Alert.alert("Campos requeridos", "Nombre, correo, contraseña y teléfono son obligatorios.");
       return;
     }
     setLoading(true);
@@ -47,12 +47,10 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const fields = [
-    { key: "name", placeholder: "Nombre" },
-    { key: "lastName", placeholder: "Apellido" },
+    { key: "fullName", placeholder: "Nombre completo" },
     { key: "email", placeholder: "Correo electrónico", keyboardType: "email-address" },
     { key: "password", placeholder: "Contraseña", secureTextEntry: true },
-    { key: "phone", placeholder: "Teléfono", keyboardType: "phone-pad" },
-    { key: "address", placeholder: "Dirección" },
+    { key: "phoneNumber", placeholder: "Teléfono", keyboardType: "phone-pad" },
   ];
 
   return (

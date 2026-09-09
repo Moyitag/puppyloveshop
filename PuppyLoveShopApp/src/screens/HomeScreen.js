@@ -9,23 +9,22 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { getProducts, getSubCategories } from "../api/api";
+import { getProducts } from "../api/api";
 import ProductCard from "../components/ProductCard";
 import { colors, spacing, radius } from "../theme";
 
+// El backend no tiene "subcategorías": usamos productType (campo real) como filtro.
 export default function HomeScreen({ navigation }) {
   const [products, setProducts] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [activeSubCategory, setActiveSubCategory] = useState(null);
+  const [activeType, setActiveType] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [prodRes, subRes] = await Promise.all([getProducts(), getSubCategories()]);
-      setProducts(prodRes.data);
-      setSubCategories(subRes.data);
+      const res = await getProducts();
+      setProducts(res.data);
     } catch (err) {
       console.log("Error cargando catálogo:", err.message);
     } finally {
@@ -43,10 +42,12 @@ export default function HomeScreen({ navigation }) {
     loadData();
   };
 
+  const productTypes = [...new Set(products.map((p) => p.productType).filter(Boolean))];
+
   const filtered = products.filter((p) => {
-    const matchesSub = activeSubCategory ? p.subCategoryId === activeSubCategory : true;
-    const matchesSearch = p.name?.toLowerCase().includes(search.toLowerCase());
-    return matchesSub && matchesSearch;
+    const matchesType = activeType ? p.productType === activeType : true;
+    const matchesSearch = p.productName?.toLowerCase().includes(search.toLowerCase());
+    return matchesType && matchesSearch;
   });
 
   if (loading) {
@@ -71,26 +72,20 @@ export default function HomeScreen({ navigation }) {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.chipsRow}
-        data={[{ _id: null, name: "Todos" }, ...subCategories]}
-        keyExtractor={(item) => item._id || "all"}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.chip,
-              activeSubCategory === item._id && styles.chipActive,
-            ]}
-            onPress={() => setActiveSubCategory(item._id)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                activeSubCategory === item._id && styles.chipTextActive,
-              ]}
+        data={["Todos", ...productTypes]}
+        keyExtractor={(item) => item}
+        renderItem={({ item }) => {
+          const value = item === "Todos" ? null : item;
+          const isActive = activeType === value;
+          return (
+            <TouchableOpacity
+              style={[styles.chip, isActive && styles.chipActive]}
+              onPress={() => setActiveType(value)}
             >
-              {item.name}
-            </Text>
-          </TouchableOpacity>
-        )}
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{item}</Text>
+            </TouchableOpacity>
+          );
+        }}
       />
 
       <FlatList
@@ -106,9 +101,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("ProductDetail", { product: item })}
           />
         )}
-        ListEmptyComponent={
-          <Text style={styles.empty}>No se encontraron productos.</Text>
-        }
+        ListEmptyComponent={<Text style={styles.empty}>No se encontraron productos.</Text>}
       />
     </View>
   );

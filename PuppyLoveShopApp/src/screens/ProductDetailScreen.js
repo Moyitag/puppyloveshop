@@ -10,16 +10,21 @@ import {
   TextInput,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { getReviewsByProduct, createReview, addToCart } from "../api/api";
+import { getReviewsByProduct, createReview } from "../api/api";
+import { addProductToCart } from "../api/cartHelpers";
 import { colors, spacing, radius } from "../theme";
 
-export default function ProductDetailScreen({ route, navigation }) {
+export default function ProductDetailScreen({ route }) {
   const { product } = route.params;
   const { client } = useAuth();
   const [reviews, setReviews] = useState([]);
-  const [comment, setComment] = useState("");
+  const [title, setTitle] = useState("");
+  const [details, setDetails] = useState("");
   const [rating, setRating] = useState(5);
   const [adding, setAdding] = useState(false);
+
+  const totalStock = (product.variants || []).reduce((s, v) => s + (v.stock || 0), 0);
+  const hasStock = (product.variants || []).length === 0 || totalStock > 0;
 
   useEffect(() => {
     getReviewsByProduct(product._id)
@@ -34,7 +39,7 @@ export default function ProductDetailScreen({ route, navigation }) {
     }
     setAdding(true);
     try {
-      await addToCart({ clientId: client._id, productId: product._id, quantity: 1 });
+      await addProductToCart(client.id, product._id, 1);
       Alert.alert("Agregado", "El producto se añadió a tu carrito.");
     } catch (err) {
       Alert.alert("Error", err.response?.data?.message || "No se pudo agregar.");
@@ -48,16 +53,26 @@ export default function ProductDetailScreen({ route, navigation }) {
       Alert.alert("Inicia sesión", "Debes iniciar sesión para dejar una reseña.");
       return;
     }
-    if (!comment.trim()) return;
+    if (!title.trim() || !details.trim()) {
+      Alert.alert("Completa la reseña", "Escribe un título y el detalle de tu experiencia.");
+      return;
+    }
     try {
-      const res = await createReview({
-        clientId: client._id,
+      await createReview({
+        userId: client.id,
         productId: product._id,
-        comment,
         rating,
+        title,
+        experienceType: "Compra",
+        details,
+        certifiedPurchase: false,
       });
-      setReviews((prev) => [res.data, ...prev]);
-      setComment("");
+      setReviews((prev) => [
+        { _id: Date.now().toString(), rating, title, details, userId: { fullName: client.fullName } },
+        ...prev,
+      ]);
+      setTitle("");
+      setDetails("");
       setRating(5);
     } catch (err) {
       Alert.alert("Error", err.response?.data?.message || "No se pudo enviar la reseña.");
@@ -67,25 +82,21 @@ export default function ProductDetailScreen({ route, navigation }) {
   return (
     <ScrollView style={styles.container}>
       <Image
-        source={{ uri: product.image || "https://via.placeholder.com/400" }}
+        source={{ uri: product.images?.[0] || "https://via.placeholder.com/400" }}
         style={styles.image}
       />
       <View style={styles.body}>
-        <Text style={styles.name}>{product.name}</Text>
+        <Text style={styles.name}>{product.productName}</Text>
         <Text style={styles.price}>${Number(product.price).toFixed(2)}</Text>
         <Text style={styles.description}>{product.description}</Text>
-        <Text style={styles.stock}>
-          {product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}
-        </Text>
+        <Text style={styles.stock}>{hasStock ? "Disponible" : "Agotado"}</Text>
 
         <TouchableOpacity
-          style={[styles.button, product.stock <= 0 && styles.buttonDisabled]}
+          style={[styles.button, !hasStock && styles.buttonDisabled]}
           onPress={handleAddToCart}
-          disabled={product.stock <= 0 || adding}
+          disabled={!hasStock || adding}
         >
-          <Text style={styles.buttonText}>
-            {adding ? "Agregando..." : "Agregar al carrito"}
-          </Text>
+          <Text style={styles.buttonText}>{adding ? "Agregando..." : "Agregar al carrito"}</Text>
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Reseñas</Text>
@@ -93,10 +104,17 @@ export default function ProductDetailScreen({ route, navigation }) {
         <View style={styles.reviewForm}>
           <TextInput
             style={styles.reviewInput}
-            placeholder="Escribe tu reseña..."
+            placeholder="Título de tu reseña"
             placeholderTextColor={colors.muted}
-            value={comment}
-            onChangeText={setComment}
+            value={title}
+            onChangeText={setTitle}
+          />
+          <TextInput
+            style={[styles.reviewInput, { marginTop: spacing.sm, minHeight: 50 }]}
+            placeholder="Cuéntanos tu experiencia..."
+            placeholderTextColor={colors.muted}
+            value={details}
+            onChangeText={setDetails}
             multiline
           />
           <View style={styles.ratingRow}>
@@ -117,7 +135,8 @@ export default function ProductDetailScreen({ route, navigation }) {
         {reviews.map((r) => (
           <View key={r._id} style={styles.reviewCard}>
             <Text style={styles.reviewRating}>{"★".repeat(r.rating)}</Text>
-            <Text style={styles.reviewComment}>{r.comment}</Text>
+            <Text style={styles.reviewTitle}>{r.title}</Text>
+            <Text style={styles.reviewComment}>{r.details}</Text>
           </View>
         ))}
       </View>
@@ -151,7 +170,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: spacing.md,
   },
-  reviewInput: { minHeight: 50, color: colors.text, fontSize: 14 },
+  reviewInput: { minHeight: 40, color: colors.text, fontSize: 14 },
   ratingRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm },
   star: { fontSize: 22, color: colors.border, marginRight: 2 },
   starActive: { color: "#F5B942" },
@@ -172,6 +191,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   reviewRating: { color: "#F5B942", fontSize: 14 },
+  reviewTitle: { color: colors.text, fontWeight: "700", fontSize: 13, marginTop: 2 },
   reviewComment: { color: colors.text, fontSize: 13, marginTop: 2 },
   empty: { color: colors.muted, fontSize: 13, fontStyle: "italic" },
 });

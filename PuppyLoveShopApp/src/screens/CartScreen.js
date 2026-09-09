@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,12 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { getCart, updateCartItem, removeFromCart } from "../api/api";
+import { getMyCart, setCartItemQuantity, removeCartItem } from "../api/cartHelpers";
 import { colors, spacing, radius } from "../theme";
 
 export default function CartScreen({ navigation }) {
   const { client } = useAuth();
-  const [items, setItems] = useState([]);
+  const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const loadCart = useCallback(async () => {
@@ -24,8 +24,8 @@ export default function CartScreen({ navigation }) {
       return;
     }
     try {
-      const res = await getCart(client._id);
-      setItems(res.data);
+      const found = await getMyCart(client.id);
+      setCart(found);
     } catch (err) {
       console.log("Error cargando carrito:", err.message);
     } finally {
@@ -41,23 +41,21 @@ export default function CartScreen({ navigation }) {
   );
 
   const changeQuantity = async (item, delta) => {
-    const newQty = item.quantity + delta;
+    const productId = item.productId?._id || item.productId;
+    const newQty = item.amount + delta;
     if (newQty < 1) return;
-    await updateCartItem(item._id, { quantity: newQty });
-    setItems((prev) =>
-      prev.map((i) => (i._id === item._id ? { ...i, quantity: newQty } : i))
-    );
+    await setCartItemQuantity(client.id, cart, productId, newQty);
+    loadCart();
   };
 
-  const removeItem = async (id) => {
-    await removeFromCart(id);
-    setItems((prev) => prev.filter((i) => i._id !== id));
+  const removeItem = async (item) => {
+    const productId = item.productId?._id || item.productId;
+    await removeCartItem(client.id, cart, productId);
+    loadCart();
   };
 
-  const total = items.reduce(
-    (sum, i) => sum + (i.productId?.price || 0) * i.quantity,
-    0
-  );
+  const items = cart?.products || [];
+  const total = cart?.totalWithDiscount ?? cart?.total ?? 0;
 
   if (!client) {
     return (
@@ -79,41 +77,33 @@ export default function CartScreen({ navigation }) {
     <View style={styles.container}>
       <FlatList
         data={items}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item, idx) => (item.productId?._id || item.productId || idx.toString())}
         contentContainerStyle={{ padding: spacing.md }}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Tu carrito está vacío.</Text>
-        }
+        ListEmptyComponent={<Text style={styles.emptyText}>Tu carrito está vacío.</Text>}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Image
-              source={{ uri: item.productId?.image || "https://via.placeholder.com/80" }}
+              source={{ uri: "https://via.placeholder.com/80" }}
               style={styles.image}
             />
             <View style={{ flex: 1 }}>
               <Text style={styles.name} numberOfLines={1}>
-                {item.productId?.name}
+                {item.productId?.productName || "Producto"}
               </Text>
               <Text style={styles.price}>
                 ${Number(item.productId?.price || 0).toFixed(2)}
               </Text>
               <View style={styles.qtyRow}>
-                <TouchableOpacity
-                  style={styles.qtyButton}
-                  onPress={() => changeQuantity(item, -1)}
-                >
+                <TouchableOpacity style={styles.qtyButton} onPress={() => changeQuantity(item, -1)}>
                   <Text style={styles.qtyButtonText}>-</Text>
                 </TouchableOpacity>
-                <Text style={styles.qtyText}>{item.quantity}</Text>
-                <TouchableOpacity
-                  style={styles.qtyButton}
-                  onPress={() => changeQuantity(item, 1)}
-                >
+                <Text style={styles.qtyText}>{item.amount}</Text>
+                <TouchableOpacity style={styles.qtyButton} onPress={() => changeQuantity(item, 1)}>
                   <Text style={styles.qtyButtonText}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity onPress={() => removeItem(item._id)}>
+            <TouchableOpacity onPress={() => removeItem(item)}>
               <Text style={styles.remove}>Eliminar</Text>
             </TouchableOpacity>
           </View>
@@ -122,10 +112,10 @@ export default function CartScreen({ navigation }) {
 
       {items.length > 0 && (
         <View style={styles.footer}>
-          <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
+          <Text style={styles.total}>Total: ${Number(total).toFixed(2)}</Text>
           <TouchableOpacity
             style={styles.checkoutButton}
-            onPress={() => navigation.navigate("Checkout", { items, total })}
+            onPress={() => navigation.navigate("Checkout", { cart })}
           >
             <Text style={styles.checkoutText}>Ir a pagar</Text>
           </TouchableOpacity>
