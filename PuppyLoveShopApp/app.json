@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Puppy Love Shop",
+    "slug": "puppy-love-shop-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FFF8F3"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": true },
+    "android": {
+      "package": "com.ricaldone.puppyloveshop"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Text } from "react-native";
+import { useAuth } from "../context/AuthContext";
+import { colors } from "../theme";
+
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
+import HomeScreen from "../screens/HomeScreen";
+import ProductDetailScreen from "../screens/ProductDetailScreen";
+import CartScreen from "../screens/CartScreen";
+import CheckoutScreen from "../screens/CheckoutScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+const ICONS = { Catálogo: "🐾", Carrito: "🛒", Perfil: "👤" };
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.primary }, headerTintColor: "#fff" }}>
+      <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Puppy Love Shop" }} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: "Producto" }} />
+    </Stack.Navigator>
+  );
+}
+
+function CartStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.primary }, headerTintColor: "#fff" }}>
+      <Stack.Screen name="CartMain" component={CartScreen} options={{ title: "Mi carrito" }} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: "Pagar" }} />
+    </Stack.Navigator>
+  );
+}
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarIcon: () => <Text style={{ fontSize: 18 }}>{ICONS[route.name]}</Text>,
+      })}
+    >
+      <Tab.Screen name="Catálogo" component={HomeStack} />
+      <Tab.Screen name="Carrito" component={CartStack} />
+      <Tab.Screen name="Perfil" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+    </Stack.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  const { client, loading } = useAuth();
+
+  if (loading) return null;
+
+  return (
+    <NavigationContainer>
+      {client ? <MainTabs /> : <AuthStack />}
+    </NavigationContainer>
+  );
+}
