@@ -2,31 +2,41 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   Alert,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import AppTextInput from "../components/AppTextInput";
+import AppButton from "../components/AppButton";
 import { colors, spacing, radius } from "../theme";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  const validate = () => {
+    const nextErrors = {};
+    if (!email.trim()) nextErrors.email = "El correo es obligatorio.";
+    else if (!EMAIL_REGEX.test(email.trim())) nextErrors.email = "Correo inválido.";
+    if (!password) nextErrors.password = "La contraseña es obligatoria.";
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Campos requeridos", "Ingresa tu correo y contraseña.");
-      return;
-    }
+    if (!validate()) return;
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim().toLowerCase(), password);
     } catch (err) {
       Alert.alert(
         "Error al iniciar sesión",
@@ -42,34 +52,27 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Image
-        source={{ uri: "https://via.placeholder.com/120x120.png?text=🐾" }}
-        style={styles.logo}
-      />
+      <Image source={require("../../assets/icon.png")} style={styles.logo} />
       <Text style={styles.title}>Puppy Love Shop</Text>
       <Text style={styles.subtitle}>Todo para tu mejor amigo</Text>
 
-      <TextInput
-        style={styles.input}
+      <AppTextInput
         placeholder="Correo electrónico"
-        placeholderTextColor={colors.muted}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        error={errors.email}
       />
-      <TextInput
-        style={styles.input}
+      <AppTextInput
         placeholder="Contraseña"
-        placeholderTextColor={colors.muted}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        error={errors.password}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? "Ingresando..." : "Iniciar sesión"}</Text>
-      </TouchableOpacity>
+      <AppButton label="Iniciar sesión" onPress={handleLogin} loading={loading} />
 
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
         <Text style={styles.link}>¿No tienes cuenta? Regístrate</Text>
@@ -88,24 +91,5 @@ const styles = StyleSheet.create({
   logo: { width: 90, height: 90, alignSelf: "center", marginBottom: spacing.md, borderRadius: radius.full },
   title: { fontSize: 26, fontWeight: "800", color: colors.text, textAlign: "center" },
   subtitle: { fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: spacing.xl },
-  input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 4,
-    marginBottom: spacing.md,
-    fontSize: 15,
-    color: colors.text,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-    marginTop: spacing.sm,
-  },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   link: { color: colors.secondary, textAlign: "center", marginTop: spacing.lg, fontWeight: "600" },
 });

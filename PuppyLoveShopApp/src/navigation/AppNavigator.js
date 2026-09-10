@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -6,6 +6,7 @@ import { Text } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme";
 
+import WelcomeLoadingScreen from "../screens/WelcomeLoadingScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -63,10 +64,18 @@ function AuthStack() {
   );
 }
 
+const MIN_LOADING_SCREEN_MS = 1500;
+
 export default function AppNavigator() {
   const { client, loading } = useAuth();
+  const [showWelcomeLoading, setShowWelcomeLoading] = useState(true);
 
-  if (loading) return null;
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcomeLoading(false), MIN_LOADING_SCREEN_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading || showWelcomeLoading) return <WelcomeLoadingScreen />;
 
   return (
     <NavigationContainer>

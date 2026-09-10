@@ -12,6 +12,8 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { getReviewsByProduct, createReview } from "../api/api";
 import { addProductToCart } from "../api/cartHelpers";
+import AppButton from "../components/AppButton";
+import AppTextInput from "../components/AppTextInput";
 import { colors, spacing, radius } from "../theme";
 
 export default function ProductDetailScreen({ route }) {
@@ -91,31 +93,29 @@ export default function ProductDetailScreen({ route }) {
         <Text style={styles.description}>{product.description}</Text>
         <Text style={styles.stock}>{hasStock ? "Disponible" : "Agotado"}</Text>
 
-        <TouchableOpacity
-          style={[styles.button, !hasStock && styles.buttonDisabled]}
-          onPress={handleAddToCart}
-          disabled={!hasStock || adding}
-        >
-          <Text style={styles.buttonText}>{adding ? "Agregando..." : "Agregar al carrito"}</Text>
-        </TouchableOpacity>
+        <View style={{ marginTop: spacing.md }}>
+          <AppButton
+            label={hasStock ? "Agregar al carrito" : "Agotado"}
+            onPress={handleAddToCart}
+            loading={adding}
+            disabled={!hasStock}
+          />
+        </View>
 
         <Text style={styles.sectionTitle}>Reseñas</Text>
 
         <View style={styles.reviewForm}>
-          <TextInput
-            style={styles.reviewInput}
+          <AppTextInput
             placeholder="Título de tu reseña"
-            placeholderTextColor={colors.muted}
             value={title}
             onChangeText={setTitle}
           />
-          <TextInput
-            style={[styles.reviewInput, { marginTop: spacing.sm, minHeight: 50 }]}
+          <AppTextInput
             placeholder="Cuéntanos tu experiencia..."
-            placeholderTextColor={colors.muted}
             value={details}
             onChangeText={setDetails}
             multiline
+            style={{ minHeight: 50 }}
           />
           <View style={styles.ratingRow}>
             {[1, 2, 3, 4, 5].map((n) => (
@@ -123,9 +123,9 @@ export default function ProductDetailScreen({ route }) {
                 <Text style={[styles.star, n <= rating && styles.starActive]}>★</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.sendButton} onPress={handleSubmitReview}>
-              <Text style={styles.sendButtonText}>Enviar</Text>
-            </TouchableOpacity>
+            <View style={{ marginLeft: "auto" }}>
+              <AppButton label="Enviar" onPress={handleSubmitReview} />
+            </View>
           </View>
         </View>
 

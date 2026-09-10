@@ -1,79 +1,83 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { colors, spacing, radius } from "../theme";
+import AppTextInput from "../components/AppTextInput";
+import AppButton from "../components/AppButton";
+import { colors, spacing } from "../theme";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[0-9]{8,}$/;
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
-  // Campos reales del backend: fullName, email, password, phoneNumber (todos requeridos)
-  const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    phoneNumber: "",
-  });
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", phoneNumber: "" });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
+  const validate = () => {
+    const e = {};
+    if (!form.fullName.trim()) e.fullName = "El nombre es obligatorio.";
+    if (!form.email.trim()) e.email = "El correo es obligatorio.";
+    else if (!EMAIL_REGEX.test(form.email.trim())) e.email = "Correo inválido.";
+    if (!form.password) e.password = "La contraseña es obligatoria.";
+    else if (form.password.length < 6) e.password = "Mínimo 6 caracteres.";
+    if (!form.phoneNumber.trim()) e.phoneNumber = "El teléfono es obligatorio.";
+    else if (!PHONE_REGEX.test(form.phoneNumber.trim())) e.phoneNumber = "Solo números, mínimo 8 dígitos.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleRegister = async () => {
-    const { fullName, email, password, phoneNumber } = form;
-    if (!fullName || !email || !password || !phoneNumber) {
-      Alert.alert("Campos requeridos", "Nombre, correo, contraseña y teléfono son obligatorios.");
-      return;
-    }
+    if (!validate()) return;
     setLoading(true);
     try {
-      await register(form);
+      await register({ ...form, email: form.email.trim().toLowerCase() });
       Alert.alert("¡Listo!", "Cuenta creada. Ahora inicia sesión.", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
     } catch (err) {
-      Alert.alert(
-        "Error al registrar",
-        err.response?.data?.message || "No se pudo crear la cuenta."
-      );
+      Alert.alert("Error al registrar", err.response?.data?.message || "No se pudo crear la cuenta.");
     } finally {
       setLoading(false);
     }
   };
 
-  const fields = [
-    { key: "fullName", placeholder: "Nombre completo" },
-    { key: "email", placeholder: "Correo electrónico", keyboardType: "email-address" },
-    { key: "password", placeholder: "Contraseña", secureTextEntry: true },
-    { key: "phoneNumber", placeholder: "Teléfono", keyboardType: "phone-pad" },
-  ];
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Crear cuenta</Text>
 
-      {fields.map((f) => (
-        <TextInput
-          key={f.key}
-          style={styles.input}
-          placeholder={f.placeholder}
-          placeholderTextColor={colors.muted}
-          autoCapitalize={f.key === "email" ? "none" : "sentences"}
-          secureTextEntry={f.secureTextEntry}
-          keyboardType={f.keyboardType || "default"}
-          value={form[f.key]}
-          onChangeText={(v) => setField(f.key, v)}
-        />
-      ))}
+      <AppTextInput
+        placeholder="Nombre completo"
+        value={form.fullName}
+        onChangeText={(v) => setField("fullName", v)}
+        error={errors.fullName}
+      />
+      <AppTextInput
+        placeholder="Correo electrónico"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        value={form.email}
+        onChangeText={(v) => setField("email", v)}
+        error={errors.email}
+      />
+      <AppTextInput
+        placeholder="Contraseña"
+        secureTextEntry
+        value={form.password}
+        onChangeText={(v) => setField("password", v)}
+        error={errors.password}
+      />
+      <AppTextInput
+        placeholder="Teléfono"
+        keyboardType="phone-pad"
+        value={form.phoneNumber}
+        onChangeText={(v) => setField("phoneNumber", v)}
+        error={errors.phoneNumber}
+      />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? "Creando..." : "Registrarme"}</Text>
-      </TouchableOpacity>
+      <AppButton label="Registrarme" onPress={handleRegister} loading={loading} />
 
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
         <Text style={styles.link}>¿Ya tienes cuenta? Inicia sesión</Text>
@@ -83,37 +87,7 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: colors.text,
-    textAlign: "center",
-    marginBottom: spacing.lg,
-  },
-  input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 4,
-    marginBottom: spacing.md,
-    fontSize: 15,
-    color: colors.text,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-    marginTop: spacing.sm,
-  },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  container: { flexGrow: 1, backgroundColor: colors.background, padding: spacing.lg, justifyContent: "center" },
+  title: { fontSize: 24, fontWeight: "800", color: colors.text, textAlign: "center", marginBottom: spacing.lg },
   link: { color: colors.secondary, textAlign: "center", marginTop: spacing.lg, fontWeight: "600" },
 });

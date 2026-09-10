@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { getAllSales } from "../api/api";
+import AppButton from "../components/AppButton";
 import { colors, spacing, radius } from "../theme";
 
 // No existe /sales/client/:id en el backend: se listan todas (vienen con shoppingCartId
@@ -55,9 +56,9 @@ export default function ProfileScreen() {
         )}
       />
 
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
-      </TouchableOpacity>
+      <View style={styles.logoutWrapper}>
+        <AppButton label="Cerrar sesión" onPress={logout} variant="danger" />
+      </View>
     </View>
   );
 }
@@ -91,13 +92,5 @@ const styles = StyleSheet.create({
   orderDate: { color: colors.text, fontSize: 13 },
   orderStatus: { color: colors.secondary, fontSize: 12, fontWeight: "600", textTransform: "capitalize" },
   orderTotal: { color: colors.primary, fontWeight: "700", fontSize: 13 },
-  logoutButton: {
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-    marginTop: spacing.md,
-  },
-  logoutText: { color: colors.danger, fontWeight: "700", fontSize: 15 },
+  logoutWrapper: { marginTop: spacing.md },
 });

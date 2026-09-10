@@ -11,6 +11,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getMyCart, setCartItemQuantity, removeCartItem } from "../api/cartHelpers";
+import AppButton from "../components/AppButton";
 import { colors, spacing, radius } from "../theme";
 
 export default function CartScreen({ navigation }) {
@@ -113,12 +114,7 @@ export default function CartScreen({ navigation }) {
       {items.length > 0 && (
         <View style={styles.footer}>
           <Text style={styles.total}>Total: ${Number(total).toFixed(2)}</Text>
-          <TouchableOpacity
-            style={styles.checkoutButton}
-            onPress={() => navigation.navigate("Checkout", { cart })}
-          >
-            <Text style={styles.checkoutText}>Ir a pagar</Text>
-          </TouchableOpacity>
+          <AppButton label="Ir a pagar" onPress={() => navigation.navigate("Checkout", { cart })} />
         </View>
       )}
     </View>

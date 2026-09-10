@@ -1,6 +1,31 @@
 # Puppy Love Shop — App Móvil (React Native + Expo)
 
-App cliente para la tienda de mascotas. Se conecta al backend Node.js/Express + MongoDB que ya tienes.
+**Instituto Técnico Ricaldone — Tercer año de Desarrollo de Software**
+**Módulo 5: Desarrollo de componentes para dispositivos móviles**
+**Proyecto:** Tienda en línea — avance de aplicación móvil (PTC)
+**Docente:** Daniel Wilfredo Granados Hernández
+
+**Equipo No.:** _(completar)_
+**Integrantes:**
+- _(nombre 1)_
+- _(nombre 2)_
+- _(nombre 3)_
+
+App cliente para la tienda de mascotas. Se conecta al backend Node.js/Express + MongoDB del proyecto.
+
+## Dependencias instaladas
+
+- `expo` — framework base (SDK 57)
+- `react-navigation` (`native`, `native-stack`, `bottom-tabs`) — navegación por pestañas y pilas
+- `axios` — cliente HTTP hacia el backend, configurado con `withCredentials` para la cookie de sesión
+- `@react-native-async-storage/async-storage` — persistencia local de la sesión del cliente
+- `expo-image-picker` — reservado para selección de imágenes (reseñas/perfil a futuro)
+
+## Configuraciones adicionales hechas al proyecto
+
+- Ícono (`icon`), ícono adaptativo de Android (`adaptive-icon`) y Splash Screen personalizados en `app.json` (assets en `/assets`).
+- Pantalla de carga adicional (`WelcomeLoadingScreen.js`) que se muestra después del Splash Screen nativo mientras se revisa la sesión guardada.
+- Componentes reutilizables (`AppButton`, `AppTextInput`, `ProductCard`) usados en toda la app para mantener una sola nomenclatura y estilo.
 
 ## Instalación
 
@@ -54,7 +79,27 @@ Si algo cambia en el backend, el único archivo que centraliza las rutas es `src
 - Checkout (dirección, método de pago, resumen)
 - Perfil (datos del cliente, historial de pedidos, cerrar sesión)
 
+## Estructura de carpetas
+
+```
+src/
+  api/          -> api.js (endpoints) y cartHelpers.js (lógica de carrito)
+  components/   -> AppButton, AppTextInput, ProductCard (reutilizables)
+  context/      -> AuthContext.js (sesión del cliente)
+  navigation/   -> AppNavigator.js (única lógica de navegación de la app)
+  screens/      -> una pantalla por archivo
+assets/         -> icon.png, adaptive-icon.png, splash.png, favicon.png
+```
+
 ## Notas
 
-- El token JWT se guarda con AsyncStorage y se envía automático en cada request.
+- La sesión se maneja con la cookie httpOnly que setea el backend (`authCookie`); axios usa `withCredentials: true` para reenviarla automáticamente.
 - El acceso al catálogo requiere sesión iniciada (ajustable en `AppNavigator.js` si prefieres que sea público).
+- Los íconos y el splash en `/assets` son un placeholder (una pata generada por código); reemplázalos por el logo real del proyecto cuando lo tengan.
+
+## Pendiente por parte del equipo (no depende del código)
+
+- [ ] Verificar que todas las pantallas coincidan con los mockups de Figma del proyecto.
+- [ ] Tener datos reales cargados en la base de datos (productos, etc.) para la demo.
+- [ ] Repositorio de GitHub con todos los integrantes como colaboradores y al menos 5 commits cada uno.
+- [ ] Completar los nombres del equipo arriba en este README.
