@@ -10,6 +10,9 @@ import WelcomeLoadingScreen from "../screens/WelcomeLoadingScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
+import ServicesScreen from "../screens/ServicesScreen";
+import PromotionsScreen from "../screens/PromotionsScreen";
+import CategoryScreen from "../screens/CategoryScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import CartScreen from "../screens/CartScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
@@ -18,12 +21,20 @@ import ProfileScreen from "../screens/ProfileScreen";
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const ICONS = { Catálogo: "🐾", Carrito: "🛒", Perfil: "👤" };
+const ICONS = { Catálogo: "🏠", Carrito: "🛒", Perfil: "👤" };
 
 function HomeStack() {
+  // Home, Servicios, Promociones y Categoría dibujan su propio AppHeader rosa,
+  // por eso ocultamos el header nativo. ProductDetail conserva el suyo.
   return (
-    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.primary }, headerTintColor: "#fff" }}>
-      <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Puppy Love Shop" }} />
+    <Stack.Navigator
+      initialRouteName="Home"
+      screenOptions={{ headerStyle: { backgroundColor: colors.primary }, headerTintColor: "#fff" }}
+    >
+      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Services" component={ServicesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Promotions" component={PromotionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Category" component={CategoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: "Producto" }} />
     </Stack.Navigator>
   );
