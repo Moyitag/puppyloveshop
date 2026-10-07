@@ -15,6 +15,7 @@ const salesSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "ShoppingCart",
       required: true,
+      unique: true,
     },
     deliveryAddress: {
       address: { type: String, required: true },
@@ -28,6 +29,8 @@ const salesSchema = new Schema(
       enum: ["pendiente", "pagado", "rechazado"],
       default: "pendiente",
     },
+    wompiTransactionId: { type: String, sparse: true },
+    wompiIsReal: { type: Boolean },
   },
   {
     timestamps: true,

@@ -26,5 +26,7 @@ export const config = {
     audience: process.env.AUDIENCE,
     client_id: process.env.CLIENT_ID,
     client_secret: process.env.CLIENT_SECRET,
+    webhook_url: process.env.WOMPI_WEBHOOK_URL,
+    mock_mode: process.env.WOMPI_MOCK_MODE === "true",
   },
 };

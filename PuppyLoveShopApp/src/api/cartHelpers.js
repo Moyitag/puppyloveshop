@@ -1,54 +1,44 @@
-import { getAllCarts, createCart, updateCart } from "./api";
+import { getMyCart as fetchMyCart, createCart, updateCart } from "./api";
 
-// El backend no tiene "un carrito por cliente": hay que listar todos y filtrar por userId.
-export async function getMyCart(clientId) {
-  const res = await getAllCarts();
-  return res.data.find((cart) => (cart.userId?._id || cart.userId) === clientId) || null;
+const itemPayload = (item) => ({
+  productId: item.productId?._id || item.productId,
+  variantId: item.variantId,
+  amount: item.amount,
+});
+
+const sameItem = (item, productId, variantId) =>
+  (item.productId?._id || item.productId) === productId &&
+  String(item.variantId || "") === String(variantId || "");
+
+export async function getMyCart() {
+  const response = await fetchMyCart();
+  return response.data || null;
 }
 
-// Agrega/actualiza la cantidad de un producto dentro del carrito del cliente.
-// Como insertCart/updateCart esperan el arreglo completo de products, reconstruimos
-// la lista completa cada vez (con { productId, amount }); el backend recalcula subtotal/total.
-export async function addProductToCart(clientId, productId, amount = 1) {
-  const existingCart = await getMyCart(clientId);
-
-  if (!existingCart) {
-    return createCart({
-      userId: clientId,
-      products: [{ productId, amount }],
-    });
+export async function addProductToCart(productId, variantId, amount = 1) {
+  const cart = await getMyCart();
+  if (!cart) {
+    return createCart({ products: [{ productId, variantId, amount }] });
   }
 
-  const products = existingCart.products.map((p) => ({
-    productId: p.productId?._id || p.productId,
-    amount: p.amount,
+  const products = cart.products.map(itemPayload);
+  const index = cart.products.findIndex((item) => sameItem(item, productId, variantId));
+  if (index >= 0) products[index].amount += amount;
+  else products.push({ productId, variantId, amount });
+  return updateCart(cart._id, { products });
+}
+
+export function setCartItemQuantity(cart, productId, variantId, amount) {
+  const products = cart.products.map((item) => ({
+    ...itemPayload(item),
+    amount: sameItem(item, productId, variantId) ? amount : item.amount,
   }));
-
-  const idx = products.findIndex((p) => p.productId === productId);
-  if (idx >= 0) {
-    products[idx].amount += amount;
-  } else {
-    products.push({ productId, amount });
-  }
-
-  return updateCart(existingCart._id, { userId: clientId, products });
+  return updateCart(cart._id, { products });
 }
 
-export async function setCartItemQuantity(clientId, cart, productId, amount) {
+export function removeCartItem(cart, productId, variantId) {
   const products = cart.products
-    .map((p) => ({
-      productId: p.productId?._id || p.productId,
-      amount: (p.productId?._id || p.productId) === productId ? amount : p.amount,
-    }))
-    .filter((p) => p.amount > 0);
-
-  return updateCart(cart._id, { userId: clientId, products });
-}
-
-export async function removeCartItem(clientId, cart, productId) {
-  const products = cart.products
-    .map((p) => ({ productId: p.productId?._id || p.productId, amount: p.amount }))
-    .filter((p) => p.productId !== productId);
-
-  return updateCart(cart._id, { userId: clientId, products });
+    .filter((item) => !sameItem(item, productId, variantId))
+    .map(itemPayload);
+  return updateCart(cart._id, { products });
 }

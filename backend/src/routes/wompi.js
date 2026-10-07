@@ -1,11 +1,14 @@
 import express from "express";
 import wompiController from "../controllers/wompiController.js";
+import { validateAuthCookie } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/token").post(wompiController.generarToken);
-router.route("/paymentTest").post(wompiController.paymentTest);
-router.route("/payment3ds").post(wompiController.payment3ds);
-router.route("/confirmSalePayment").post(wompiController.confirmSalePayment);
+router.post(
+  "/card-payment",
+  validateAuthCookie(["client"]),
+  wompiController.cardPayment
+);
+router.post("/webhook", wompiController.webhook);
 
 export default router;

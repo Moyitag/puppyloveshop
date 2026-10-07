@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginClient, registerClient } from "../api/api";
+import { loginClient, registerClient, logout as logoutRequest } from "../api/api";
 
 const AuthContext = createContext();
 
@@ -36,6 +36,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    await logoutRequest().catch(() => {});
     await AsyncStorage.removeItem("puppy_client");
     setClient(null);
   };

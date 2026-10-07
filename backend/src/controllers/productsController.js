@@ -1,7 +1,41 @@
 import productModel from "../models/products.js";
-import { v2 as cloudinary } from "cloudinary";
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const productsController = {};
+const uploadsDirectory = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../uploads"
+);
+
+const removeLocalImages = async (images = []) => {
+  for (const image of images) {
+    if (!image.startsWith("/uploads/")) continue;
+    const filePath = path.resolve(uploadsDirectory, path.basename(image));
+    if (!filePath.startsWith(`${uploadsDirectory}${path.sep}`)) continue;
+    await fs.unlink(filePath).catch((error) => {
+      if (error.code !== "ENOENT") console.error("Could not delete image:", error.message);
+    });
+  }
+};
+
+const uploadedImages = (files = []) =>
+  files.map((file) =>
+    file.path?.startsWith("http") ? file.path : `/uploads/${file.filename}`
+  );
+
+const productForResponse = (req, product) => {
+  const data = product.toObject ? product.toObject() : product;
+  return {
+    ...data,
+    images: (data.images || []).map((image) =>
+      image.startsWith("/uploads/")
+        ? `${req.protocol}://${req.get("host")}${image}`
+        : image
+    ),
+  };
+};
 
 const parseIfJson = (value) => {
   if (typeof value !== "string") return value;
@@ -16,7 +50,7 @@ const parseIfJson = (value) => {
 productsController.getAllProducts = async (req, res) => {
   try {
     const products = await productModel.find().populate("supplierId", "name email");
-    return res.status(200).json(products);
+    return res.status(200).json(products.map((product) => productForResponse(req, product)));
   } catch (error) {
     console.log("error" + error);
     return res.status(500).json({ message: "Internal server error" });
@@ -34,7 +68,7 @@ productsController.getProductById = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    return res.status(200).json(product);
+    return res.status(200).json(productForResponse(req, product));
   } catch (error) {
     console.log("error" + error);
     return res.status(500).json({ message: "Internal server error" });
@@ -61,7 +95,7 @@ productsController.insertProduct = async (req, res) => {
       });
     }
 
-    const images = req.files ? req.files.map((file) => file.path) : [];
+    const images = uploadedImages(req.files);
 
     const newProduct = new productModel({
       productName,
@@ -116,12 +150,16 @@ productsController.updateProduct = async (req, res) => {
     };
 
     if (req.files && req.files.length > 0) {
-      updatedData.images = req.files.map((file) => file.path);
+      updatedData.images = uploadedImages(req.files);
     }
 
     await productModel.findByIdAndUpdate(req.params.id, updatedData, {
       new: true,
     });
+
+    if (req.files && req.files.length > 0) {
+      await removeLocalImages(productFound.images);
+    }
 
     return res.status(200).json({ message: "Product updated" });
   } catch (error) {
@@ -138,6 +176,8 @@ productsController.deleteProduct = async (req, res) => {
     if (!deletedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    await removeLocalImages(deletedProduct.images);
 
     return res.status(200).json({ message: "Product deleted" });
   } catch (error) {

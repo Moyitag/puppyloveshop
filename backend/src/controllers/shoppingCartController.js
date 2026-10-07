@@ -1,35 +1,107 @@
+import mongoose from "mongoose";
 import shoppingCartModel from "../models/shoppingCart.js";
 import productModel from "../models/products.js";
 
 const shoppingCartController = {};
 
-//SELECT
+const populateCart = (query) =>
+  query
+    .populate("userId", "fullName email")
+    .populate("products.productId", "productName price images variants");
+
+const canAccessCart = (cart, user) =>
+  user.userType === "admin" || cart.userId.toString() === user.id.toString();
+
+const activeCartFilter = (userId) => ({
+  userId,
+  $or: [{ status: "active" }, { status: { $exists: false } }],
+});
+
+const normalizeProducts = async (products) => {
+  if (!Array.isArray(products)) {
+    const error = new Error("products must be an array");
+    error.status = 400;
+    throw error;
+  }
+
+  let total = 0;
+  const normalized = [];
+  const seen = new Set();
+
+  for (const item of products) {
+    const amount = Number(item.amount);
+    if (!Number.isInteger(amount) || amount < 1) {
+      const error = new Error("Each quantity must be a positive integer");
+      error.status = 400;
+      throw error;
+    }
+    if (!mongoose.isValidObjectId(item.productId)) {
+      const error = new Error("Invalid product");
+      error.status = 400;
+      throw error;
+    }
+
+    const product = await productModel.findById(item.productId);
+    if (!product) {
+      const error = new Error(`Product ${item.productId} not found`);
+      error.status = 404;
+      throw error;
+    }
+
+    let variant = null;
+    if (product.variants.length > 0) {
+      variant = product.variants.id(item.variantId);
+      if (!variant) {
+        const error = new Error(`Select a valid variant for ${product.productName}`);
+        error.status = 400;
+        throw error;
+      }
+      if (amount > variant.stock) {
+        const error = new Error(
+          `Only ${variant.stock} units of ${product.productName} are available`
+        );
+        error.status = 409;
+        throw error;
+      }
+    }
+
+    const key = `${product._id}:${variant?._id || "default"}`;
+    if (seen.has(key)) {
+      const error = new Error("The same product variant is repeated");
+      error.status = 400;
+      throw error;
+    }
+    seen.add(key);
+
+    const subtotal = product.price * amount;
+    total += subtotal;
+    normalized.push({
+      productId: product._id,
+      variantId: variant?._id,
+      size: variant?.size || "",
+      color: variant?.color || "",
+      amount,
+      subtotal,
+    });
+  }
+
+  return { products: normalized, total };
+};
+
 shoppingCartController.getAllCarts = async (req, res) => {
   try {
-    const carts = await shoppingCartModel
-      .find()
-      .populate("userId", "fullName email")
-      .populate("products.productId", "productName price");
-
-    return res.status(200).json(carts);
+    return res.status(200).json(await populateCart(shoppingCartModel.find()));
   } catch (error) {
     console.log("error" + error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-//SELECT by id
-shoppingCartController.getCartById = async (req, res) => {
+shoppingCartController.getMyCart = async (req, res) => {
   try {
-    const cart = await shoppingCartModel
-      .findById(req.params.id)
-      .populate("userId", "fullName email")
-      .populate("products.productId", "productName price");
-
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
+    const cart = await populateCart(
+      shoppingCartModel.findOne(activeCartFilter(req.user.id))
+    );
     return res.status(200).json(cart);
   } catch (error) {
     console.log("error" + error);
@@ -37,123 +109,86 @@ shoppingCartController.getCartById = async (req, res) => {
   }
 };
 
-//INSERT
+shoppingCartController.getCartById = async (req, res) => {
+  try {
+    const cart = await shoppingCartModel.findById(req.params.id);
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+    if (!canAccessCart(cart, req.user)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    return res.status(200).json(await populateCart(shoppingCartModel.findById(cart._id)));
+  } catch (error) {
+    console.log("error" + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 shoppingCartController.insertCart = async (req, res) => {
   try {
-    const { userId, products, discount } = req.body;
-
-    if (!userId || !products || products.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "userId and products are required" });
+    const existing = await shoppingCartModel.findOne(activeCartFilter(req.user.id));
+    if (existing) {
+      return res.status(409).json({ message: "You already have an active cart" });
+    }
+    if (!Array.isArray(req.body.products) || req.body.products.length === 0) {
+      return res.status(400).json({ message: "At least one product is required" });
     }
 
-    let total = 0;
-    let newProducts = [];
-
-    for (let i = 0; i < products.length; i++) {
-      const productFound = await productModel.findById(products[i].productId);
-
-      if (!productFound) {
-        return res
-          .status(404)
-          .json({ message: `Product ${products[i].productId} not found` });
-      }
-
-      const subtotal = productFound.price * products[i].amount;
-      total += subtotal;
-
-      newProducts.push({
-        productId: products[i].productId,
-        amount: products[i].amount,
-        subtotal,
-      });
-    }
-
-    const discountValue = discount || 0;
-    const totalWithDiscount = total - discountValue;
-
-    const newCart = new shoppingCartModel({
-      userId,
-      products: newProducts,
-      total,
-      discount: discountValue,
-      totalWithDiscount,
+    const calculated = await normalizeProducts(req.body.products);
+    const cart = await shoppingCartModel.create({
+      userId: req.user.id,
+      products: calculated.products,
+      total: calculated.total,
+      discount: 0,
+      totalWithDiscount: calculated.total,
+      status: "active",
     });
-
-    await newCart.save();
-
-    return res.status(201).json({ message: "Cart saved", ...newCart.toObject() });
+    return res.status(201).json({ message: "Cart saved", cart });
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "You already have an active cart" });
+    }
+    return res.status(error.status || 500).json({ message: error.status ? error.message : "Internal server error" });
   }
 };
 
-//UPDATE
 shoppingCartController.updateCart = async (req, res) => {
   try {
-    const { userId, products, discount } = req.body;
-
-    let total = 0;
-    let newProducts = [];
-
-    for (let i = 0; i < products.length; i++) {
-      const productFound = await productModel.findById(products[i].productId);
-
-      if (!productFound) {
-        return res
-          .status(404)
-          .json({ message: `Product ${products[i].productId} not found` });
-      }
-
-      const subtotal = productFound.price * products[i].amount;
-      total += subtotal;
-
-      newProducts.push({
-        productId: products[i].productId,
-        amount: products[i].amount,
-        subtotal,
-      });
+    const cart = await shoppingCartModel.findById(req.params.id);
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+    if (!canAccessCart(cart, req.user)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    if (cart.status !== "active") {
+      return res.status(409).json({ message: "This cart has already been ordered" });
     }
 
-    const discountValue = discount || 0;
-    const totalWithDiscount = total - discountValue;
-
-    const updatedCart = await shoppingCartModel.findByIdAndUpdate(
-      req.params.id,
-      {
-        userId,
-        products: newProducts,
-        total,
-        discount: discountValue,
-        totalWithDiscount,
-      },
-      { new: true }
-    );
-
-    if (!updatedCart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
-    return res.status(200).json({ message: "Cart updated" });
+    const calculated = await normalizeProducts(req.body.products);
+    cart.products = calculated.products;
+    cart.total = calculated.total;
+    cart.totalWithDiscount = Math.max(0, calculated.total - cart.discount);
+    await cart.save();
+    return res.status(200).json({
+      message: "Cart updated",
+      cart: await populateCart(shoppingCartModel.findById(cart._id)),
+    });
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(error.status || 500).json({ message: error.status ? error.message : "Internal server error" });
   }
 };
 
-//DELETE
 shoppingCartController.deleteCart = async (req, res) => {
   try {
-    const deletedCart = await shoppingCartModel.findByIdAndDelete(
-      req.params.id
-    );
-
-    if (!deletedCart) {
-      return res.status(404).json({ message: "Cart not found" });
+    const cart = await shoppingCartModel.findById(req.params.id);
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+    if (!canAccessCart(cart, req.user)) {
+      return res.status(403).json({ message: "Access denied" });
     }
-
+    if (cart.status !== "active") {
+      return res.status(409).json({ message: "Ordered carts cannot be deleted" });
+    }
+    await cart.deleteOne();
     return res.status(200).json({ message: "Cart deleted" });
   } catch (error) {
     console.log("error" + error);

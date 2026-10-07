@@ -1,7 +1,13 @@
 import axios from "axios";
+import { Platform } from "react-native";
 
 // Cambia esto por la IP local de tu PC (donde corre "npm start" del backend) y el puerto 4000
-export const API_URL = "http://192.168.1.100:4000/api";
+const developmentHost =
+  Platform.OS === "web" && typeof window !== "undefined"
+    ? window.location.hostname
+    : "192.168.1.11";
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL || `http://${developmentHost}:4000/api`;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -32,7 +38,7 @@ export const createReview = (data) => api.post("/productReview", data);
 // --- ShoppingCart ---
 // No existe "un carrito por cliente" con endpoint propio: se listan todos y se filtra por userId.
 // products: [{ productId, amount, subtotal }], total, discount, totalWithDiscount
-export const getAllCarts = () => api.get("/shoppingCart");
+export const getMyCart = () => api.get("/shoppingCart/mine");
 export const createCart = (data) => api.post("/shoppingCart", data);
 export const updateCart = (cartId, data) => api.put(`/shoppingCart/${cartId}`, data);
 export const deleteCart = (cartId) => api.delete(`/shoppingCart/${cartId}`);
@@ -41,5 +47,6 @@ export const deleteCart = (cartId) => api.delete(`/shoppingCart/${cartId}`);
 // Se crea a partir de un carrito ya existente: shoppingCartId, deliveryAddress, paymentMethod
 export const getAllSales = () => api.get("/sales");
 export const createSale = (data) => api.post("/sales", data);
+export const startWompiPayment = (data) => api.post("/wompi/card-payment", data);
 
 export default api;

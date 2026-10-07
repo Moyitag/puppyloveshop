@@ -25,6 +25,9 @@ const shoppingCartSchema = new Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Products",
         },
+        variantId: { type: mongoose.Schema.Types.ObjectId },
+        size: { type: String, default: "" },
+        color: { type: String, default: "" },
         amount: { type: Number, required: true },
         subtotal: { type: Number, required: true },
       },
@@ -32,11 +35,22 @@ const shoppingCartSchema = new Schema(
     total: { type: Number, required: true, default: 0 },
     discount: { type: Number, default: 0 },
     totalWithDiscount: { type: Number, required: true, default: 0 },
+    status: {
+      type: String,
+      enum: ["active", "ordered"],
+      default: "active",
+      index: true,
+    },
   },
   {
     timestamps: true,
     strict: false,
   }
+);
+
+shoppingCartSchema.index(
+  { userId: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: "active" } }
 );
 
 export default model("ShoppingCart", shoppingCartSchema);
