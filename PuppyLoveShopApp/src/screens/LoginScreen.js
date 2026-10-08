@@ -1,14 +1,6 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Image,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import AppTextInput from "../components/AppTextInput";
 import AppButton from "../components/AppButton";
@@ -20,76 +12,113 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const validate = () => {
-    const nextErrors = {};
-    if (!email.trim()) nextErrors.email = "El correo es obligatorio.";
-    else if (!EMAIL_REGEX.test(email.trim())) nextErrors.email = "Correo inválido.";
-    if (!password) nextErrors.password = "La contraseña es obligatoria.";
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
   const handleLogin = async () => {
-    if (!validate()) return;
+    const nextErrors = {};
+    if (!EMAIL_REGEX.test(email.trim())) nextErrors.email = "Ingresa un correo válido.";
+    if (!password) nextErrors.password = "Ingresa tu contraseña.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
     setLoading(true);
     try {
       await login(email.trim().toLowerCase(), password);
-    } catch (err) {
-      Alert.alert(
-        "Error al iniciar sesión",
-        err.response?.data?.message || "Credenciales inválidas."
-      );
+    } catch (error) {
+      setErrors({ form: error.response?.status === 401 || error.response?.status === 404
+        ? "El correo o la contraseña no coinciden."
+        : "No pudimos iniciar sesión. Revisa tu conexión e intenta de nuevo." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <Image source={require("../../assets/icon.png")} style={styles.logo} />
-      <Text style={styles.title}>Puppy Love Shop</Text>
-      <Text style={styles.subtitle}>Todo para tu mejor amigo</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.brand}>
+            <Image source={require("../../assets/icon.png")} style={styles.logo} />
+            <Text style={styles.brandName}>Puppy Love Shop</Text>
+            <Text style={styles.brandTagline}>Todo para tu mejor amigo</Text>
+          </View>
 
-      <AppTextInput
-        placeholder="Correo electrónico"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        error={errors.email}
-      />
-      <AppTextInput
-        placeholder="Contraseña"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        error={errors.password}
-      />
+          <View style={styles.card}>
+            <Text style={styles.eyebrow}>BIENVENIDO DE NUEVO</Text>
+            <Text style={styles.title}>Qué gusto verte</Text>
+            <Text style={styles.description}>Inicia sesión para seguir cuidando a quien más quieres.</Text>
 
-      <AppButton label="Iniciar sesión" onPress={handleLogin} loading={loading} />
+            <AppTextInput
+              label="Correo electrónico"
+              placeholder="tu@correo.com"
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              value={email}
+              onChangeText={(value) => { setEmail(value); setErrors((current) => ({ ...current, email: undefined, form: undefined })); }}
+              error={errors.email}
+            />
 
-      <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.link}>¿No tienes cuenta? Regístrate</Text>
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+            <View style={styles.passwordHeading}>
+              <Text style={styles.fieldLabel}>Contraseña</Text>
+              <Pressable onPress={() => navigation.navigate("PasswordRecovery", { email: email.trim() })} hitSlop={8}>
+                <Text style={styles.forgotLink}>¿La olvidaste?</Text>
+              </Pressable>
+            </View>
+            <View style={styles.passwordField}>
+              <AppTextInput
+                placeholder="Tu contraseña"
+                secureTextEntry={!showPassword}
+                autoComplete="current-password"
+                textContentType="password"
+                value={password}
+                onChangeText={(value) => { setPassword(value); setErrors((current) => ({ ...current, password: undefined, form: undefined })); }}
+                error={errors.password}
+                style={styles.passwordInput}
+              />
+              <Pressable style={styles.showButton} onPress={() => setShowPassword((value) => !value)} accessibilityLabel={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                <Text style={styles.showText}>{showPassword ? "Ocultar" : "Ver"}</Text>
+              </Pressable>
+            </View>
+
+            {errors.form ? <Text style={styles.formError}>{errors.form}</Text> : null}
+            <AppButton label="Iniciar sesión" onPress={handleLogin} loading={loading} />
+          </View>
+
+          <Pressable style={styles.registerRow} onPress={() => navigation.navigate("Register")}>
+            <Text style={styles.registerText}>¿Aún no tienes cuenta? </Text>
+            <Text style={styles.registerLink}>Regístrate</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
-  },
-  logo: { width: 90, height: 90, alignSelf: "center", marginBottom: spacing.md, borderRadius: radius.full },
-  title: { fontSize: 26, fontWeight: "800", color: colors.text, textAlign: "center" },
-  subtitle: { fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: spacing.xl },
-  link: { color: colors.secondary, textAlign: "center", marginTop: spacing.lg, fontWeight: "600" },
+  safeArea: { flex: 1, backgroundColor: colors.pinkSoft },
+  flex: { flex: 1 },
+  content: { flexGrow: 1, justifyContent: "center", paddingHorizontal: spacing.lg, paddingVertical: spacing.xl },
+  brand: { alignItems: "center", marginBottom: spacing.xl },
+  logo: { width: 68, height: 68, borderRadius: radius.lg, marginBottom: spacing.sm },
+  brandName: { fontSize: 22, fontWeight: "800", color: colors.primaryDark, letterSpacing: -0.4 },
+  brandTagline: { color: colors.muted, fontSize: 13, marginTop: spacing.xs },
+  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, shadowColor: colors.primaryDark, shadowOpacity: 0.08, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
+  eyebrow: { color: colors.secondary, fontWeight: "800", fontSize: 11, letterSpacing: 1.6, marginBottom: spacing.sm },
+  title: { color: colors.text, fontSize: 27, fontWeight: "800", letterSpacing: -0.5 },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: spacing.xs, marginBottom: spacing.lg },
+  passwordHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.xs },
+  fieldLabel: { fontSize: 13, fontWeight: "700", color: colors.muted },
+  forgotLink: { color: colors.secondary, fontSize: 13, fontWeight: "700" },
+  passwordField: { position: "relative" },
+  passwordInput: { paddingRight: 78 },
+  showButton: { position: "absolute", right: spacing.md, top: 13, padding: spacing.xs },
+  showText: { color: colors.secondary, fontWeight: "700", fontSize: 13 },
+  formError: { color: colors.danger, fontSize: 13, lineHeight: 19, marginBottom: spacing.md },
+  registerRow: { flexDirection: "row", justifyContent: "center", paddingVertical: spacing.lg },
+  registerText: { color: colors.muted, fontSize: 14 },
+  registerLink: { color: colors.primaryDark, fontWeight: "800", fontSize: 14 },
 });

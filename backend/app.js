@@ -9,6 +9,7 @@ import loginAdministratorRoutes from "./src/routes/loginAdministrator.js";
 import clientsRoutes from "./src/routes/clients.js";
 import registerClientRoutes from "./src/routes/registerClient.js";
 import loginClientRoutes from "./src/routes/loginClient.js";
+import passwordRecoveryRoutes from "./src/routes/passwordRecovery.js";
 import logoutRoutes from "./src/routes/logout.js";
 import suppliersRoutes from "./src/routes/suppliers.js";
 import productsRoutes from "./src/routes/products.js";
@@ -53,6 +54,7 @@ app.use(
 app.use("/api/loginAdministrator", loginAdministratorRoutes);
 app.use("/api/registerClient", registerClientRoutes);
 app.use("/api/loginClient", loginClientRoutes);
+app.use("/api/password-recovery", passwordRecoveryRoutes);
 app.use("/api/logout", logoutRoutes);
 
 //Administrator: creación abierta (bootstrap), lectura/edición/borrado protegidas por ruta
