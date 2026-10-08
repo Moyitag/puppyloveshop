@@ -2,6 +2,10 @@ import productReviewModel from "../models/productReview.js";
 
 const productReviewController = {};
 
+// Solo el autor de la reseña o un administrador pueden editarla o eliminarla
+const canManageReview = (user, review) =>
+  user.userType === "admin" || review.userId.toString() === user.id;
+
 //SELECT
 productReviewController.getAllReviews = async (req, res) => {
   try {
@@ -58,15 +62,17 @@ productReviewController.insertReview = async (req, res) => {
       title,
       experienceType,
       details,
-      userId,
       certifiedPurchase,
       productId,
     } = req.body;
 
-    if (!rating || !title || !experienceType || !details || !userId || !productId) {
+    // El autor siempre es el cliente de la sesión, no el que venga en el body
+    const userId = req.user.id;
+
+    if (!rating || !title || !experienceType || !details || !productId) {
       return res.status(400).json({
         message:
-          "rating, title, experienceType, details, userId and productId are required",
+          "rating, title, experienceType, details and productId are required",
       });
     }
 
@@ -95,15 +101,21 @@ productReviewController.updateReview = async (req, res) => {
   try {
     const { rating, title, experienceType, details, active } = req.body;
 
-    const updatedReview = await productReviewModel.findByIdAndUpdate(
-      req.params.id,
-      { rating, title, experienceType, details, active },
-      { new: true }
-    );
+    const review = await productReviewModel.findById(req.params.id);
 
-    if (!updatedReview) {
+    if (!review) {
       return res.status(404).json({ message: "Review not found" });
     }
+
+    if (!canManageReview(req.user, review)) {
+      return res.status(403).json({ message: "You can only edit your own reviews" });
+    }
+
+    await productReviewModel.findByIdAndUpdate(
+      req.params.id,
+      { rating, title, experienceType, details, active },
+      { new: true, runValidators: true }
+    );
 
     return res.status(200).json({ message: "Review updated" });
   } catch (error) {
@@ -115,13 +127,17 @@ productReviewController.updateReview = async (req, res) => {
 //DELETE
 productReviewController.deleteReview = async (req, res) => {
   try {
-    const deletedReview = await productReviewModel.findByIdAndDelete(
-      req.params.id
-    );
+    const review = await productReviewModel.findById(req.params.id);
 
-    if (!deletedReview) {
+    if (!review) {
       return res.status(404).json({ message: "Review not found" });
     }
+
+    if (!canManageReview(req.user, review)) {
+      return res.status(403).json({ message: "You can only delete your own reviews" });
+    }
+
+    await productReviewModel.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({ message: "Review deleted" });
   } catch (error) {

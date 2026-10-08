@@ -12,6 +12,7 @@ import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
 import ServicesScreen from "../screens/ServicesScreen";
 import PromotionsScreen from "../screens/PromotionsScreen";
+import ReviewsScreen from "../screens/ReviewsScreen";
 import CategoryScreen from "../screens/CategoryScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
 import CartScreen from "../screens/CartScreen";
@@ -24,7 +25,7 @@ const Tab = createBottomTabNavigator();
 const ICONS = { Catálogo: "🏠", Carrito: "🛒", Perfil: "👤" };
 
 function HomeStack() {
-  // Home, Servicios, Promociones y Categoría dibujan su propio AppHeader rosa,
+  // Home, Servicios, Promociones, Reseñas y Categoría dibujan su propio AppHeader rosa,
   // por eso ocultamos el header nativo. ProductDetail conserva el suyo.
   return (
     <Stack.Navigator
@@ -34,6 +35,7 @@ function HomeStack() {
       <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Services" component={ServicesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Promotions" component={PromotionsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Category" component={CategoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: "Producto" }} />
     </Stack.Navigator>

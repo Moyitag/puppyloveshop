@@ -31,9 +31,13 @@ export const getProductById = (id) => api.get(`/products/${id}`);
 
 // --- Reviews (ProductReview) ---
 // Campos reales: rating, title, experienceType, details, userId, productId, certifiedPurchase
+export const getAllReviews = () => api.get("/productReview");
 export const getReviewsByProduct = (productId) =>
   api.get(`/productReview/product/${productId}`);
 export const createReview = (data) => api.post("/productReview", data);
+// PUT solo actualiza: rating, title, experienceType, details, active
+export const updateReview = (id, data) => api.put(`/productReview/${id}`, data);
+export const deleteReview = (id) => api.delete(`/productReview/${id}`);
 
 // --- ShoppingCart ---
 // No existe "un carrito por cliente" con endpoint propio: se listan todos y se filtra por userId.

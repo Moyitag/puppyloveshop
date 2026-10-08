@@ -14,7 +14,7 @@ const ADDRESS_KEY = "puppy_address";
 
 // Encabezado del diseño: barra rosa (logo, buscador, carrito), chips de dirección/cuenta
 // y barra amarilla con Mascotas ▾ / Reseñas / Servicios / Promociones.
-// active: "Servicios" | "Promociones" | "Mascotas" | undefined
+// active: "Servicios" | "Promociones" | "Reseñas" | "Mascotas" | undefined
 export default function AppHeader({ active }) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -123,7 +123,7 @@ export default function AppHeader({ active }) {
       {/* Barra amarilla */}
       <View style={styles.nav}>
         <NavLink label="Mascotas ▾" active={active === "Mascotas"} onPress={() => setSheet("pets")} />
-        <NavLink label="Reseñas" onPress={() => Alert.alert("Reseñas", "Esta sección estará disponible muy pronto 🐾")} />
+        <NavLink label="Reseñas" active={active === "Reseñas"} onPress={() => goTo("Reviews")} />
         <NavLink label="Servicios" active={active === "Servicios"} onPress={() => goTo("Services")} />
         <NavLink label="Promociones" active={active === "Promociones"} onPress={() => goTo("Promotions")} />
       </View>
