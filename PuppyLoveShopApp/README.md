@@ -43,8 +43,6 @@ Escanea el QR con la app **Expo Go** (Android/iOS) o presiona `a` / `i` para emu
 
 ## Configurar el backend
 
-Para que funcione la recuperación de contraseña, configura `USER_EMAIL` y `USER_PASSWORD` en el entorno del backend. Con Gmail, `USER_PASSWORD` debe ser una contraseña de aplicación. Si utilizas otro proveedor, añade `SMTP_HOST`, `SMTP_PORT` y `SMTP_SECURE`; tienes un ejemplo en `backend/.env.example`. El servidor envía un código de 6 dígitos que vence en 10 minutos.
-
 Edita `src/api/api.js` y cambia:
 
 ```js
@@ -60,8 +58,6 @@ export const API_URL = "http://192.168.1.100:4000/api";
 |---|---|---|
 | Registro cliente | `POST /api/registerClient` | body: `{ fullName, email, password, phoneNumber }` |
 | Login cliente | `POST /api/loginClient` | body: `{ email, password }`. Responde `{ id, fullName }` y deja sesión en cookie httpOnly `authCookie` |
-| Solicitar recuperación | `POST /api/password-recovery/request` | body: `{ email }`. Envía un código de 6 dígitos válido por 10 minutos |
-| Cambiar contraseña | `POST /api/password-recovery/reset` | body: `{ email, code, password }` |
 | Listar productos | `GET /api/products` | campos: `productName, images[], price, productType, variants[]` |
 | Reseñas por producto | `GET /api/productReview/product/:productId` | |
 | Crear reseña | `POST /api/productReview` | body: `{ userId, productId, rating, title, experienceType, details, certifiedPurchase }` |
@@ -76,7 +72,7 @@ Si algo cambia en el backend, el único archivo que centraliza las rutas es `src
 
 ## Pantallas incluidas
 
-- Login / Registro / Recuperación de contraseña
+- Login / Registro
 - Catálogo con búsqueda y filtro por subcategoría
 - Detalle de producto + reseñas con calificación
 - Carrito (editar cantidades, eliminar)

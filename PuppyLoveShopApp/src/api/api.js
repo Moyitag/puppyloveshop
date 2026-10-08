@@ -1,13 +1,11 @@
 import axios from "axios";
 import { Platform } from "react-native";
-import Constants from "expo-constants";
 
-// En Expo Go tomamos la IP del mismo servidor que sirve la app.
-const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
+// Cambia esto por la IP local de tu PC (donde corre "npm start" del backend) y el puerto 4000
 const developmentHost =
   Platform.OS === "web" && typeof window !== "undefined"
     ? window.location.hostname
-    : expoHost || "192.168.1.17";
+    : "192.168.1.11";
 export const API_URL =
   process.env.EXPO_PUBLIC_API_URL || `http://${developmentHost}:4000/api`;
 
@@ -23,8 +21,6 @@ export const registerClient = (data) => api.post("/registerClient", data);
 // Backend real: POST /api/loginClient  { email, password } -> setea cookie httpOnly
 // y responde { message, id, fullName }
 export const loginClient = (data) => api.post("/loginClient", data);
-export const requestPasswordReset = (email) => api.post("/password-recovery/request", { email });
-export const resetPassword = (data) => api.post("/password-recovery/reset", data);
 export const logout = () => api.post("/logout");
 
 // --- Products ---

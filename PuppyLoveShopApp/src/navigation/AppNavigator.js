@@ -9,7 +9,6 @@ import { colors } from "../theme";
 import WelcomeLoadingScreen from "../screens/WelcomeLoadingScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
-import PasswordRecoveryScreen from "../screens/PasswordRecoveryScreen";
 import HomeScreen from "../screens/HomeScreen";
 import ServicesScreen from "../screens/ServicesScreen";
 import PromotionsScreen from "../screens/PromotionsScreen";
@@ -74,7 +73,6 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="PasswordRecovery" component={PasswordRecoveryScreen} />
     </Stack.Navigator>
   );
 }
